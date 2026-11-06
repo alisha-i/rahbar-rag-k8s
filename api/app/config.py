@@ -40,6 +40,12 @@ class Settings:
     ollama_url: str = "http://host.minikube.internal:11434"
     hosted_base_url: str = ""        # e.g. an OpenAI-compatible endpoint
     llm_api_key: str = field(default="", repr=False)   # from the Secret; never log it
+    relevance_floor: float = 0.5
+
+    # Semantic cache
+    redis_host: str = "redis"
+    redis_port: int = 6379
+    cache_threshold: float = 0.85
 
     log_level: str = "INFO"
 
@@ -58,5 +64,9 @@ def get_settings() -> Settings:
         ollama_url=os.environ.get("OLLAMA_URL", "http://host.minikube.internal:11434"),
         hosted_base_url=os.environ.get("HOSTED_BASE_URL", ""),
         llm_api_key=os.environ.get("LLM_API_KEY", ""),
+        relevance_floor=_float("RELEVANCE_FLOOR", 0.5),
+        redis_host=os.environ.get("REDIS_HOST", "redis"),
+        redis_port=_int("REDIS_PORT", 6379),
+        cache_threshold=_float("CACHE_THRESHOLD", 0.85),
         log_level=os.environ.get("LOG_LEVEL", "INFO"),
     )

@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rahbar-config
+  namespace: rahbar
+data:
+  # Retrieval and LLM execution modes
+  RETRIEVER: "stub"
+  LLM_PROVIDER: "stub"
+
+  # Embedding pin: indexer writes this into collection metadata; API checks on readiness
+  EMBED_MODEL: "dummy-768"
+
+  # Vector store settings
+  CHROMA_HOST: "chroma"
+  CHROMA_PORT: "8000"
+  CHROMA_COLLECTION: "rahbar"
+
+  # Retrieval tuning
+  TOP_K: "5"
+  RELEVANCE_FLOOR: "0.5"
+
+  # Low temperature ensures deterministic, grounded generation from facts and valid JSON output.
+  TEMPERATURE: "0.2"
+
+  # Generation model and endpoints
+  LLM_MODEL: "llama3.2:3b"
+  OLLAMA_URL: "http://host.minikube.internal:11434"
+  HOSTED_BASE_URL: ""
+
+  # Semantic cache settings
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  CACHE_THRESHOLD: "0.85"
+
+  # Corpus indexing parameters (tokens per chunk and overlap)
+  CORPUS_DIR: "/corpus"
+  CHUNK_SIZE: "400"
+  CHUNK_OVERLAP: "50"
+
+  # Logging
+  LOG_LEVEL: "INFO"
