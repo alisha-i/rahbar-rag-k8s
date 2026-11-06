@@ -1,0 +1,152 @@
+name: CI
+
+on:
+  push:
+    branches: [dev]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint & Code Style
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install linter
+        run: pip install ruff
+
+      - name: Run Python linter
+        run: ruff check .
+
+  unit-tests:
+    name: Unit & Pipeline Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-cov httpx fastapi pydantic chromadb-client redis pypdf pdfplumber pytesseract Pillow
+
+      - name: Run indexer unit tests
+        run: |
+          PYTHONPATH=indexer python -m pytest indexer/tests --cov=indexer
+
+      - name: Run API unit & cache tests
+        run: |
+          PYTHONPATH=api python -m pytest api/tests --cov=api
+
+  manifest-validation:
+    name: Kubeconform Manifest Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up kubeconform
+        run: |
+          wget https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz
+          tar -xzf kubeconform-linux-amd64.tar.gz
+          sudo mv kubeconform /usr/local/bin/
+
+      - name: Validate Kubernetes manifests with kubeconform
+        run: |
+          kubeconform -strict -summary -ignore-missing-schemas k8s/base/
+
+  build-and-scan:
+    name: Docker Build & Vulnerability Scan
+    needs: [lint, unit-tests, manifest-validation]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build API image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./api
+          push: false
+          tags: rahbar-api:${{ github.sha }}
+          load: true
+
+      - name: Run Trivy vulnerability scanner on API image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: rahbar-api:${{ github.sha }}
+          format: "table"
+          exit-code: "0"
+          severity: "CRITICAL,HIGH"
+
+  e2e-eval:
+    name: Ephemeral Kind Cluster & Golden Evaluation Gate
+    needs: [build-and-scan]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create kind ephemeral cluster
+        uses: helm/kind-action@v1.10.0
+        with:
+          cluster_name: kind-rahbar
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install eval dependencies
+        run: |
+          pip install httpx pyyaml pytest
+
+      - name: Build local container images
+        run: |
+          docker build -t rahbar-api:${{ github.sha }} ./api
+          docker build -t rahbar-indexer:${{ github.sha }} ./indexer
+          docker build -t rahbar-ui:${{ github.sha }} ./ui
+          kind load docker-image rahbar-api:${{ github.sha }} --name kind-rahbar
+          kind load docker-image rahbar-indexer:${{ github.sha }} --name kind-rahbar
+          kind load docker-image rahbar-ui:${{ github.sha }} --name kind-rahbar
+
+      - name: Deploy Kubernetes resources
+        run: |
+          kubectl apply -k k8s/overlays/dev/
+
+      - name: Run indexer Job on fixture corpus
+        run: |
+          kubectl create job --from=cronjob/reindex initial-fixture-index -n rahbar
+          kubectl wait --for=condition=complete job/initial-fixture-index -n rahbar --timeout=180s
+
+      - name: Wait for API rollout status
+        run: |
+          kubectl rollout status deployment/api -n rahbar --timeout=120s
+
+      - name: Port forward API service
+        run: |
+          kubectl port-forward svc/api 8000:8000 -n rahbar &
+          sleep 5
+
+      - name: Run evaluation runner regression gate
+        run: |
+          python eval/run_eval.py --api http://127.0.0.1:8000 --golden eval/fixtures/golden.fixture.yaml --baseline eval/baseline.json
