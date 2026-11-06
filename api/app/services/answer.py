@@ -4,13 +4,25 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 from typing import Any
 
 from ..config import Settings
 from ..logjson import request_id_var
 from ..providers.llm.base import LLMProvider
 from ..retrieval.base import Retriever
+from ..retrieval.chroma import _embed_query
+from ..routes.metrics import (
+    ABSTENTIONS,
+    CACHE_HITS,
+    CACHE_MISSES,
+    FALLBACKS,
+    GENERATION_LATENCY,
+    RETRIEVAL_LATENCY,
+    TOKENS,
+)
 from ..schemas import Answer, AskResponse, Citation, Passage, RetrievedRef
+from .cache import SemanticCache
 
 log = logging.getLogger("rahbar.answer")
 
@@ -43,54 +55,25 @@ def _validate_citations(citations: list[Citation], passages: list[Passage]) -> l
 
 def _check_cache(question: str, settings: Settings) -> AskResponse | None:
     """Semantic cache lookup in Redis (section 3.3). Returns cached AskResponse on hit."""
-    # Never cache or lookup follow-up questions
-    if any(q in question.lower() for q in ["what about", "and then", "also", "furthermore"]):
-        return None
-
     try:
-        import redis
-
-        r = redis.Redis(host=settings.redis_host, port=settings.redis_port, socket_timeout=0.5, decode_responses=True)
-        cached_raw = r.get(f"cache:{question.strip().lower()}")
-        if cached_raw:
-            data = json.loads(cached_raw)
-            log.info("semantic cache hit", extra={"question": question[:80]})
-            return AskResponse(
-                request_id=request_id_var.get(),
-                answer=data["answer"],
-                citations=[Citation(**c) for c in data.get("citations", [])],
-                answered_from_context=data["answered_from_context"],
-                confidence=data["confidence"],
-                retrieved=[RetrievedRef(**ref) for ref in data.get("retrieved", [])],
-                provider=data.get("provider", "cache"),
-            )
+        cache = SemanticCache(settings)
+        query_vec = _embed_query(question, settings)
+        return cache.lookup(question, query_vec)
     except Exception as exc:
-        log.debug("cache lookup skipped or unavailable: %s", exc)
-    return None
+        log.debug("cache lookup skipped or error: %s", exc)
+        return None
 
 
 def _store_cache(question: str, response: AskResponse, settings: Settings) -> None:
     """Store entry in Redis semantic cache (section 3.3).
     Never cache follow-ups, abstentions, out-of-scope, or validation failures.
     """
-    if not response.answered_from_context:
-        return  # Never cache abstentions
-
     try:
-        import redis
-
-        r = redis.Redis(host=settings.redis_host, port=settings.redis_port, socket_timeout=0.5, decode_responses=True)
-        payload = {
-            "answer": response.answer,
-            "citations": [c.model_dump() for c in response.citations],
-            "answered_from_context": response.answered_from_context,
-            "confidence": response.confidence,
-            "retrieved": [ref.model_dump() for ref in response.retrieved],
-            "provider": response.provider,
-        }
-        r.set(f"cache:{question.strip().lower()}", json.dumps(payload), ex=86400)
+        cache = SemanticCache(settings)
+        query_vec = _embed_query(question, settings)
+        cache.store(question, query_vec, response)
     except Exception as exc:
-        log.debug("cache store skipped or unavailable: %s", exc)
+        log.debug("cache store skipped or error: %s", exc)
 
 
 def answer_question(
@@ -108,15 +91,20 @@ def answer_question(
     # Step 2: Semantic cache check
     cached = _check_cache(question, settings)
     if cached:
+        CACHE_HITS.labels(type="semantic").inc()
         return cached
+    CACHE_MISSES.inc()
 
     # Step 3 & 4: Retrieve top-k chunks from Chroma (with superseded filter)
+    t_ret = time.perf_counter()
     passages = retriever.retrieve(question, k=settings.top_k)
+    RETRIEVAL_LATENCY.observe(time.perf_counter() - t_ret)
 
     # Step 5: Relevance floor and honest abstention (section 3.4)
     # If no chunk clears the relevance floor, abstain immediately
     cleared_passages = [p for p in passages if p.score >= settings.relevance_floor]
     if not cleared_passages:
+        ABSTENTIONS.labels(reason="below_relevance_floor").inc()
         log.info(
             "abstaining: no passages cleared relevance floor",
             extra={
@@ -128,9 +116,19 @@ def answer_question(
         answer = DECLINE_ANSWER
     else:
         # Step 6 & 7: Augment and generate with provider (has retry and safe fallback)
+        t_gen = time.perf_counter()
         try:
             answer = provider.generate(question, cleared_passages)
+            GENERATION_LATENCY.observe(time.perf_counter() - t_gen)
+            # Record token estimates
+            est_in = len(question.split()) + sum(len(p.text.split()) for p in cleared_passages)
+            TOKENS.labels(kind="input").inc(est_in)
+            TOKENS.labels(kind="output").inc(len(answer.answer.split()))
+            if not answer.answered_from_context:
+                ABSTENTIONS.labels(reason="model_unanswered").inc()
         except Exception as exc:
+            FALLBACKS.inc()
+            ABSTENTIONS.labels(reason="provider_fallback").inc()
             log.error("provider.generate unhandled exception: %s; using safe fallback", exc)
             answer = Answer(
                 reasoning="Safe fallback: unhandled provider error",
