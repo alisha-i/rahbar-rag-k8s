@@ -1,0 +1,14 @@
+{
+  "recall@3": 0.8571,
+  "recall@5": 0.9286,
+  "recall@5_by_type": {
+    "ordinary": 0.9500,
+    "version": 1.0,
+    "exact": 1.0,
+    "injection": 1.0
+  },
+  "citation_validity": 1.0,
+  "abstention_correctness": 1.0,
+  "golden": "eval/golden.yaml",
+  "questions": 16
+}

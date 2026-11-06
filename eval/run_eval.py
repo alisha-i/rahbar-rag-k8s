@@ -8,7 +8,7 @@
 Exit code 0 when every gate passes, 1 when any fails. CI relies on that exit code.
 
 Given: talking to the API, reading the golden set, writing results.json, the exit
-code. Yours: the four functions marked STARTER-TODO. They are the evaluation.
+code. Yours: the evaluation functions (recall@k, citation validity, summarise, and gate).
 """
 
 from __future__ import annotations
@@ -45,31 +45,137 @@ def ask(client: httpx.Client, api: str, question: str) -> dict:
     return response.json()
 
 
+def _match_section(expected_sec: str, candidate_sec: str) -> bool:
+    """Case-insensitive substring or normalized match for section headings."""
+    exp = expected_sec.strip().lower()
+    cand = candidate_sec.strip().lower()
+    return exp in cand or cand in exp
+
+
 def recall_at_k(relevant: list[dict], retrieved: list[dict], k: int) -> float | None:
     """Fraction of the relevant (source, section) pairs found in the top k retrieved.
     Return None when the question has no relevant passages (must-abstain questions)."""
-    # STARTER-TODO(5.2): implement. Decide how you match sections and say so in PIPELINE.md.
-    raise NotImplementedError("recall_at_k: see STARTER-TODO(5.2)")
+    if not relevant:
+        return None
+
+    top_k_retrieved = retrieved[:k]
+    matches = 0
+    for rel in relevant:
+        rel_source = rel.get("source", "").lower()
+        rel_sec = rel.get("section", "")
+        for ret in top_k_retrieved:
+            ret_source = ret.get("source", "").lower()
+            ret_sec = ret.get("section", "")
+            if rel_source == ret_source and _match_section(rel_sec, ret_sec):
+                matches += 1
+                break
+
+    return matches / len(relevant)
 
 
 def citation_validity(response: dict) -> float | None:
     """Fraction of the response's citations that match a passage in response['retrieved'].
     Return None when there are no citations."""
-    # STARTER-TODO(5.3): implement.
-    raise NotImplementedError("citation_validity: see STARTER-TODO(5.3)")
+    citations = response.get("citations") or []
+    if not citations:
+        return None
+
+    retrieved = response.get("retrieved") or []
+    retrieved_pairs = {(r.get("source", "").lower(), r.get("section", "").strip().lower()) for r in retrieved}
+
+    valid = 0
+    for c in citations:
+        c_src = c.get("source", "").lower()
+        c_sec = c.get("section", "").strip().lower()
+        matched = False
+        for r_src, r_sec in retrieved_pairs:
+            if c_src == r_src and (c_sec in r_sec or r_sec in c_sec):
+                matched = True
+                break
+        if matched:
+            valid += 1
+
+    return valid / len(citations)
 
 
 def summarise(rows: list[dict]) -> dict:
     """Overall recall@3, recall@5, citation validity and abstention correctness, plus
     recall@5 broken down by question type. This dict becomes results.json."""
-    # STARTER-TODO(5.2, 5.3): implement.
-    raise NotImplementedError("summarise: see STARTER-TODO(5.2, 5.3)")
+    r3_scores: list[float] = []
+    r5_scores: list[float] = []
+    r5_by_type: dict[str, list[float]] = {}
+    cit_scores: list[float] = []
+    abstain_correct = 0
+    abstain_total = 0
+
+    for row in rows:
+        resp = row.get("response", {})
+        retrieved = resp.get("retrieved", [])
+        rel = row.get("relevant", [])
+        q_type = row.get("type", "ordinary")
+
+        # Abstention check
+        if row.get("must_abstain"):
+            abstain_total += 1
+            if not resp.get("answered_from_context", True):
+                abstain_correct += 1
+
+        # Recall computation
+        r3 = recall_at_k(rel, retrieved, 3)
+        r5 = recall_at_k(rel, retrieved, 5)
+        if r3 is not None:
+            r3_scores.append(r3)
+        if r5 is not None:
+            r5_scores.append(r5)
+            r5_by_type.setdefault(q_type, []).append(r5)
+
+        # Citation validity
+        cv = citation_validity(resp)
+        if cv is not None:
+            cit_scores.append(cv)
+
+    mean_r3 = round(sum(r3_scores) / len(r3_scores), 4) if r3_scores else 0.0
+    mean_r5 = round(sum(r5_scores) / len(r5_scores), 4) if r5_scores else 0.0
+    mean_cv = round(sum(cit_scores) / len(cit_scores), 4) if cit_scores else 1.0
+    abstention_rate = round(abstain_correct / abstain_total, 4) if abstain_total else 1.0
+
+    breakdown = {t: round(sum(vals) / len(vals), 4) for t, vals in r5_by_type.items()}
+
+    return {
+        "recall@3": mean_r3,
+        "recall@5": mean_r5,
+        "recall@5_by_type": breakdown,
+        "citation_validity": mean_cv,
+        "abstention_correctness": abstention_rate,
+    }
 
 
 def gate(results: dict, baseline: dict | None) -> list[str]:
     """Return one message per failed gate (section 5.4); an empty list means pass."""
-    # STARTER-TODO(5.4): implement, using the three constants at the top of this file.
-    raise NotImplementedError("gate: see STARTER-TODO(5.4)")
+    failures: list[str] = []
+
+    # Gate 1: Regression check against baseline recall@5
+    if baseline and "recall@5" in baseline:
+        allowed_floor = baseline["recall@5"] - MAX_RECALL5_DROP
+        if results.get("recall@5", 0.0) < allowed_floor:
+            failures.append(
+                f"recall@5 ({results.get('recall@5'):.2%}) dropped more than {MAX_RECALL5_DROP:.0%} "
+                f"below baseline ({baseline['recall@5']:.2%}; floor is {allowed_floor:.2%})"
+            )
+
+    # Gate 2: Citation validity check
+    if results.get("citation_validity", 1.0) < MIN_CITATION_VALIDITY:
+        failures.append(
+            f"citation validity ({results.get('citation_validity'):.2%}) below minimum {MIN_CITATION_VALIDITY:.0%}"
+        )
+
+    # Gate 3: Abstention correctness check
+    if results.get("abstention_correctness", 1.0) < REQUIRED_ABSTENTION:
+        failures.append(
+            f"abstention correctness ({results.get('abstention_correctness'):.2%}) below required {REQUIRED_ABSTENTION:.0%}"
+        )
+
+    return failures
 
 
 def main() -> int:
