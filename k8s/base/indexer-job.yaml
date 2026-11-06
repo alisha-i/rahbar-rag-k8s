@@ -15,6 +15,7 @@ spec:
       restartPolicy: OnFailure
       serviceAccountName: rahbar-indexer
       automountServiceAccountToken: false
+      enableServiceLinks: false
       securityContext:
         runAsNonRoot: true
         runAsUser: 10001
