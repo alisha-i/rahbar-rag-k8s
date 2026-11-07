@@ -146,4 +146,6 @@ class OllamaProvider:
                 log.error("Ollama connection exception on attempt %d: %s", attempt, exc)
 
         log.error("Ollama generation failed after retry; returning safe canned fallback")
-        return FALLBACK_ANSWER
+        from .stub import StubProvider
+
+        return StubProvider().generate(question, passages)

@@ -24,8 +24,10 @@ class HostedProvider:
 
     def generate(self, question: str, passages: list[Passage]) -> Answer:
         if not self.settings.hosted_base_url or not self.settings.llm_api_key:
-            log.warning("Hosted provider invoked without HOSTED_BASE_URL or LLM_API_KEY; using fallback")
-            return FALLBACK_ANSWER
+            log.warning("Hosted provider invoked without HOSTED_BASE_URL or LLM_API_KEY; using safe grounded fallback")
+            from .stub import StubProvider
+
+            return StubProvider().generate(question, passages)
 
         prompt = _build_augmented_prompt(question, passages)
         url = f"{self.settings.hosted_base_url.rstrip('/')}/chat/completions"
@@ -81,4 +83,6 @@ class HostedProvider:
                 log.error("Hosted provider connection exception on attempt %d: %s", attempt, exc)
 
         log.error("Hosted provider failed after retry; returning safe canned fallback")
-        return FALLBACK_ANSWER
+        from .stub import StubProvider
+
+        return StubProvider().generate(question, passages)
