@@ -44,7 +44,7 @@ jobs:
       - name: Install test dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pytest pytest-cov httpx fastapi pydantic chromadb-client redis pypdf pdfplumber pytesseract Pillow
+          pip install -r api/requirements.txt -r indexer/requirements.txt pytest pytest-cov Pillow
 
       - name: Run indexer unit tests
         run: |
