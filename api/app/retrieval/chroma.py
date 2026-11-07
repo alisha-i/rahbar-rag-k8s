@@ -21,13 +21,27 @@ OLDER_VERSION_KEYWORDS = re.compile(
 )
 
 
+def _deterministic_vector(text: str, dim: int = 768) -> list[float]:
+    seed = text.encode()
+    values: list[float] = []
+    while len(values) < dim:
+        seed = hashlib.sha256(seed).digest()
+        values.extend((b - 127.5) / 127.5 for b in seed)
+    values = values[:dim]
+    norm = math.sqrt(sum(v * v for v in values)) or 1.0
+    return [v / norm for v in values]
+
+
 def _embed_query(text: str, settings: Settings) -> list[float]:
     """Embed the user question using the pinned EMBED_MODEL via Ollama."""
+    if getattr(settings, "retriever", "") == "stub" or getattr(settings, "llm_provider", "") == "stub":
+        return _deterministic_vector(text, 768)
+
     url = f"{settings.ollama_url.rstrip('/')}/api/embed"
     payload = {"model": settings.embed_model, "input": [text]}
 
     try:
-        with httpx.Client(timeout=httpx.Timeout(30.0, connect=5.0)) as client:
+        with httpx.Client(timeout=httpx.Timeout(5.0, connect=2.0)) as client:
             resp = client.post(url, json=payload)
             if resp.status_code == 200:
                 data = resp.json()
@@ -44,16 +58,7 @@ def _embed_query(text: str, settings: Settings) -> list[float]:
     except Exception as exc:
         log.warning("Ollama query embedding call failed (%s); using deterministic vector for offline test", exc)
 
-    # Deterministic fallback for offline testing
-    dim = 768
-    seed = text.encode()
-    values: list[float] = []
-    while len(values) < dim:
-        seed = hashlib.sha256(seed).digest()
-        values.extend((b - 127.5) / 127.5 for b in seed)
-    values = values[:dim]
-    norm = math.sqrt(sum(v * v for v in values)) or 1.0
-    return [v / norm for v in values]
+    return _deterministic_vector(text, 768)
 
 
 class ChromaRetriever:

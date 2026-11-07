@@ -64,7 +64,7 @@ class SemanticCache:
         return redis.Redis(
             host=self.settings.redis_host,
             port=self.settings.redis_port,
-            socket_timeout=1.0,
+            socket_timeout=0.1,
             decode_responses=True,
         )
 

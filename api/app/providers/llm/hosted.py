@@ -11,7 +11,7 @@ from pydantic import ValidationError
 
 from ...config import Settings
 from ...schemas import Answer, Passage
-from .ollama import FALLBACK_ANSWER, _build_augmented_prompt
+from .ollama import FALLBACK_ANSWER, _build_augmented_prompt, parse_answer_json
 
 log = logging.getLogger("rahbar.provider.hosted")
 
@@ -31,7 +31,10 @@ class HostedProvider:
         url = f"{self.settings.hosted_base_url.rstrip('/')}/chat/completions"
         headers = {
             "Authorization": f"Bearer {self.settings.llm_api_key}",
+            "x-goog-api-key": self.settings.llm_api_key,
             "Content-Type": "application/json",
+            "HTTP-Referer": "http://localhost:8000",
+            "X-Title": "RAHBAR",
         }
         payload: dict[str, Any] = {
             "model": self.settings.llm_model,
@@ -45,6 +48,12 @@ class HostedProvider:
             try:
                 with httpx.Client(timeout=httpx.Timeout(60.0, connect=10.0)) as client:
                     resp = client.post(url, headers=headers, json=payload)
+                    # If 400 Bad Request because provider does not support response_format
+                    if resp.status_code == 400 and "response_format" in resp.text:
+                        log.info("Provider does not support response_format; retrying without it")
+                        payload.pop("response_format", None)
+                        resp = client.post(url, headers=headers, json=payload)
+
                     if resp.status_code != 200:
                         log.warning("Hosted provider returned status %d: %s", resp.status_code, resp.text)
                         continue
@@ -55,17 +64,18 @@ class HostedProvider:
                         continue
                     raw_content = choices[0].get("message", {}).get("content", "")
 
-                    # Validate output strictly with Pydantic
-                    parsed_answer = Answer.model_validate_json(raw_content)
+                    # Validate output robustly with Pydantic
+                    parsed_answer = parse_answer_json(raw_content)
                     return parsed_answer
 
-            except (ValidationError, json.JSONDecodeError) as val_err:
-                log.warning("Attempt %d failed Pydantic validation on hosted provider: %s", attempt, val_err)
+            except Exception as val_err:
+                log.warning("Attempt %d failed JSON/Pydantic validation on hosted provider: %s", attempt, val_err)
                 if attempt == 1:
+                    payload.pop("response_format", None)  # Try raw format on retry
                     payload["messages"].append({"role": "assistant", "content": raw_content if "raw_content" in locals() else "{}"})
                     payload["messages"].append({
                         "role": "user",
-                        "content": "Your previous response was not valid JSON matching the schema. Please return only valid JSON.",
+                        "content": "Return ONLY a valid JSON object matching the Answer schema: reasoning, answer, citations, answered_from_context, confidence.",
                     })
             except Exception as exc:
                 log.error("Hosted provider connection exception on attempt %d: %s", attempt, exc)
