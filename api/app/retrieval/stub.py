@@ -118,8 +118,8 @@ class StubRetriever:
     def retrieve(self, question: str, k: int) -> list[Passage]:
         q = question.lower()
 
-        # Out-of-scope topics (Hostel / Mess / Transport) -> Low scores to trigger honest abstention
-        if any(term in q for term in ["hostel", "mess", "bus", "transport", "route"]):
+        # Out-of-scope topics (Hostel / Mess / Transport) -> Low scores (< 0.50 floor) to trigger honest abstention
+        if any(term in q for term in ["hostel", "mess", "bus", "transport", "route", "suburban"]):
             return [
                 Passage(
                     chunk_id="unrelated-001",
@@ -149,22 +149,28 @@ class StubRetriever:
 
         # Match specific policy inquiries
         matched: list[Passage] = []
-        if any(w in q for w in ["rector", "dean", "honour", "honor", "award"]):
-            matched.append(_KNOWLEDGE_BASE[0])
-        if any(w in q for w in ["attendance", "exam", "sit in", "absent"]):
-            matched.append(_KNOWLEDGE_BASE[1])
-        if any(w in q for w in ["fee", "tuition", "cost", "per credit"]):
-            matched.append(_KNOWLEDGE_BASE[2])
-        if any(w in q for w in ["warning", "probation", "cgpa", "gpa"]):
-            matched.append(_KNOWLEDGE_BASE[3])
-        if any(w in q for w in ["credit hour", "curriculum", "130", "requirement"]):
-            matched.append(_KNOWLEDGE_BASE[4])
-        if any(w in q for w in ["repeat", "supersed", "2023", "2026"]):
-            matched.append(_KNOWLEDGE_BASE[5])
-        if any(w in q for w in ["ms", "phd", "duration"]):
-            matched.append(_KNOWLEDGE_BASE[6])
-        if any(w in q for w in ["conduct", "cheat", "plagiar", "discipline", "penalty"]):
-            matched.append(_KNOWLEDGE_BASE[7])
+        # Check personal queries first so they don't accidentally match "cgpa" or "gpa"
+        personal_terms = ["my gpa", "mera gpa", "mera cgpa", "my cgpa", "my marks", "my roll", "my grade", "my attendance", "mera record"]
+        is_personal = any(term in q for term in personal_terms)
+        is_greeting = q.strip().rstrip("!?. ") in ["hi", "hii", "hiii", "hiiii", "hello", "hey", "salam", "assalam", "assalam o alaikum", "kese ho"]
+
+        if not is_personal and not is_greeting:
+            if any(w in q for w in ["rector", "dean", "honour", "honor", "award"]):
+                matched.append(_KNOWLEDGE_BASE[0])
+            if any(w in q for w in ["attendance", "exam", "sit in", "absent"]):
+                matched.append(_KNOWLEDGE_BASE[1])
+            if any(w in q for w in ["fee", "tuition", "cost", "per credit"]):
+                matched.append(_KNOWLEDGE_BASE[2])
+            if any(w in q for w in ["warning", "probation", "cgpa", "gpa"]):
+                matched.append(_KNOWLEDGE_BASE[3])
+            if any(w in q for w in ["credit hour", "curriculum", "130", "requirement"]):
+                matched.append(_KNOWLEDGE_BASE[4])
+            if any(w in q for w in ["repeat", "supersed", "2023", "2026"]):
+                matched.append(_KNOWLEDGE_BASE[5])
+            if any(w in q for w in ["ms", "phd", "duration"]):
+                matched.append(_KNOWLEDGE_BASE[6])
+            if any(w in q for w in ["conduct", "cheat", "plagiar", "discipline", "penalty"]):
+                matched.append(_KNOWLEDGE_BASE[7])
 
         # Fill remaining slots up to k=3 so test suites expecting 3 passages pass
         for p in _DEFAULT_STUB_PASSAGES:

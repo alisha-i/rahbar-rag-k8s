@@ -22,9 +22,29 @@ class StubProvider:
                 confidence="low",
             )
 
-        q = question.lower()
+        q = question.lower().strip()
 
-        # 1. Out-of-scope / Absent topic abstention
+        # 1. Personal student records inquiry (honest abstention - section 3.4)
+        if any(term in q for term in ["my gpa", "mera gpa", "mera cgpa", "my cgpa", "my marks", "my roll", "my grade", "my attendance", "mera record"]):
+            return Answer(
+                reasoning="Inquiry requests personal student records or individual GPA, which are private and not part of public university policy documents.",
+                answer="The indexed university documents contain official academic policies and grading regulations, but do not contain individual student records or personal CGPA information. Please consult your student portal (Flex) for your personal grades.",
+                citations=[],
+                answered_from_context=False,
+                confidence="low",
+            )
+
+        # 2. Greeting / Chit-chat
+        if q.rstrip("!?. ") in ["hi", "hii", "hiii", "hiiii", "hello", "hey", "salam", "assalam", "assalam o alaikum", "kese ho"]:
+            return Answer(
+                reasoning="User input is a conversational greeting rather than an academic document inquiry.",
+                answer="Hello! I am RAHBAR, an AI assistant grounded strictly in official FAST-NUCES documents. Please ask a question related to university academic regulations, attendance rules, curriculum, or fee policies.",
+                citations=[],
+                answered_from_context=False,
+                confidence="low",
+            )
+
+        # 3. Out-of-scope / Absent topic abstention
         if any(term in q for term in ["hostel", "mess", "bus", "transport", "suburban"]):
             return Answer(
                 reasoning="Topic is completely absent from all indexed university documents.",
