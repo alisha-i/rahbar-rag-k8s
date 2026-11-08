@@ -26,7 +26,7 @@ class _HTMLTextExtractor(HTMLParser):
 
 
 def _ocr_page(pdf_path: str, page_number: int) -> str:
-    """Run Tesseract OCR on a single scanned page with no text layer."""
+    """Run Tesseract OCR on a single scanned page when native PDF extraction yields empty text."""
     try:
         from pdf2image import convert_from_path
         import pytesseract
