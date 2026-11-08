@@ -277,7 +277,7 @@ python eval/run_eval.py --api http://127.0.0.1:8000 --golden eval/fixtures/golde
 ---
 
 ## 👥 Authors & Academic Attribution
-- **Student ID:** i243147 (`alisha-i`)
+- **Student Name:** Alisha Iqbal (`alisha-i`) & Musfirah Hamid (`MUSFIRAH828`)
 - **Institution:** FAST National University of Computer & Emerging Sciences (NUCES)
-- **Course:** CS4032 - Software Construction & Development (Assignment 02)
+- **Course:** CS4032 - Software Construction & Development 
 - **AI Attribution:** Detailed transparency and tool usage documented in [docs/AI-USAGE.md](docs/AI-USAGE.md).
