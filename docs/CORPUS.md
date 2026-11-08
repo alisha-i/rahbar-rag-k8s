@@ -38,3 +38,12 @@ The RAHBAR corpus is drawn directly from official, public FAST-NUCES academic an
 3. **Execution Mode Support:**  
    - **Local & Production Clusters:** The indexer Job downloads and mounts documents from the persistent volume or fetches them into `corpus/raw/`.
    - **CI/CD Ephemeral Clusters:** The fast fixture corpus in `eval/fixtures/` contains lightweight markdown files (`academic-rules-2023.md`, `academic-rules-2026.md`, `fees-2026.md`) with front-matter versioning, allowing end-to-end integration and evaluation runs in under 30 seconds without network bandwidth bottlenecks.
+
+---
+
+## 4. Collaborative Corpus Validation & Edge Case Audit
+
+During partner verification and cross-testing, we audited the 9 corpus documents against real FAST-NUCES academic inquiries:
+- **Version Filtering:** Verified that when `Undergraduate Academic Rules (Aug 2023)` has `superseded: true`, retriever queries concerning current graduation and probation rules exclude obsolete 2023 clauses.
+- **Image Extraction Fallback:** Audited OCR output on `Code-of-Conduct-Scanned.pdf` to ensure section boundaries and disciplinary penalties are reliably preserved.
+- **Table Integrity:** Validated that credit hour tuition rates in `Fee-Structure-Fall-2024.pdf` retain column relationships in Markdown tables.
