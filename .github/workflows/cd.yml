@@ -69,7 +69,7 @@ jobs:
           version: v0.27.0
           node_image: kindest/node:v1.32.2
           cluster_name: kind-rahbar-cd
-          wait: 180s
+          wait: 300s
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
