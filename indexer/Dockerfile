@@ -18,6 +18,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY pipeline/ ./pipeline/
+COPY fixtures/ /corpus/
 
 USER rahbar
 

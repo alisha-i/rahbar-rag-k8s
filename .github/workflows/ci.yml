@@ -122,12 +122,12 @@ jobs:
 
       - name: Build local container images
         run: |
-          docker build -t rahbar-api:${{ github.sha }} ./api
-          docker build -t rahbar-indexer:${{ github.sha }} ./indexer
-          docker build -t rahbar-ui:${{ github.sha }} ./ui
-          kind load docker-image rahbar-api:${{ github.sha }} --name kind-rahbar
-          kind load docker-image rahbar-indexer:${{ github.sha }} --name kind-rahbar
-          kind load docker-image rahbar-ui:${{ github.sha }} --name kind-rahbar
+          docker build -t rahbar-api:dev -t rahbar-api:${{ github.sha }} ./api
+          docker build -t rahbar-indexer:dev -t rahbar-indexer:${{ github.sha }} ./indexer
+          docker build -t rahbar-ui:dev -t rahbar-ui:${{ github.sha }} ./ui
+          kind load docker-image rahbar-api:dev --name kind-rahbar
+          kind load docker-image rahbar-indexer:dev --name kind-rahbar
+          kind load docker-image rahbar-ui:dev --name kind-rahbar
 
       - name: Deploy Kubernetes resources
         run: |
