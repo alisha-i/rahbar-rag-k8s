@@ -2,16 +2,14 @@
 
 from __future__ import annotations
 
-import json
 import logging
 from typing import Any
 
 import httpx
-from pydantic import ValidationError
 
 from ...config import Settings
 from ...schemas import Answer, Passage
-from .ollama import FALLBACK_ANSWER, _build_augmented_prompt, parse_answer_json
+from .ollama import _build_augmented_prompt, parse_answer_json
 
 log = logging.getLogger("rahbar.provider.hosted")
 
@@ -70,17 +68,14 @@ class HostedProvider:
                     parsed_answer = parse_answer_json(raw_content)
                     return parsed_answer
 
-            except Exception as val_err:
-                log.warning("Attempt %d failed JSON/Pydantic validation on hosted provider: %s", attempt, val_err)
+            except Exception as exc:
+                log.warning("Attempt %d failed on hosted provider: %s", attempt, exc)
                 if attempt == 1:
                     payload.pop("response_format", None)  # Try raw format on retry
-                    payload["messages"].append({"role": "assistant", "content": raw_content if "raw_content" in locals() else "{}"})
                     payload["messages"].append({
                         "role": "user",
                         "content": "Return ONLY a valid JSON object matching the Answer schema: reasoning, answer, citations, answered_from_context, confidence.",
                     })
-            except Exception as exc:
-                log.error("Hosted provider connection exception on attempt %d: %s", attempt, exc)
 
         log.error("Hosted provider failed after retry; returning safe canned fallback")
         from .stub import StubProvider

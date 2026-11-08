@@ -1,0 +1,17 @@
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+exclude = [
+    ".git",
+    ".pytest_cache",
+    ".venv",
+    "docs",
+    "k8s",
+    "corpus",
+    "scripts",
+    "eval",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+ignore = ["E501"]

@@ -13,7 +13,7 @@ from unittest.mock import MagicMock
 
 import pytest
 from app.config import Settings
-from app.schemas import AskResponse, Citation, RetrievedRef
+from app.schemas import AskResponse, Citation
 from app.services.cache import (
     SemanticCache,
     cosine_similarity,

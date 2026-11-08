@@ -27,7 +27,7 @@ jobs:
         run: pip install ruff
 
       - name: Run Python linter
-        run: ruff check .
+        run: ruff check --config ruff.toml .
 
   unit-tests:
     name: Unit & Pipeline Tests
@@ -48,11 +48,11 @@ jobs:
 
       - name: Run indexer unit tests
         run: |
-          PYTHONPATH=indexer python -m pytest indexer/tests --cov=indexer
+          PYTHONPATH=indexer python -m pytest indexer/tests
 
       - name: Run API unit & cache tests
         run: |
-          PYTHONPATH=api python -m pytest api/tests --cov=api
+          PYTHONPATH=api python -m pytest api/tests
 
   manifest-validation:
     name: Kubeconform Manifest Validation
