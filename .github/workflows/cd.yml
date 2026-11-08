@@ -22,7 +22,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install pytest httpx fastapi pydantic chromadb-client redis pypdf pdfplumber pytesseract Pillow
+          pip install -r api/requirements.txt -r indexer/requirements.txt pytest pytest-cov Pillow
 
       - name: Run test suite
         run: |

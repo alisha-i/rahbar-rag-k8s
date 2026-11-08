@@ -59,6 +59,10 @@ class SemanticCache:
         self.settings = settings
 
     def _get_redis(self) -> Any:
+        import os
+
+        if "KUBERNETES_SERVICE_HOST" not in os.environ and self.settings.redis_host == "redis":
+            return None
         import redis
 
         return redis.Redis(
@@ -76,6 +80,8 @@ class SemanticCache:
 
         try:
             r = self._get_redis()
+            if r is None:
+                return None
             cached_keys = r.keys("semcache:*")
             if not cached_keys:
                 return None
@@ -127,6 +133,8 @@ class SemanticCache:
 
         try:
             r = self._get_redis()
+            if r is None:
+                return
             key_id = re.sub(r"[^a-zA-Z0-9]+", "_", question.lower().strip())[:40]
             cache_key = f"semcache:{key_id}"
 

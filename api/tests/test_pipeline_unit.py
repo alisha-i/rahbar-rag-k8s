@@ -7,7 +7,6 @@
 
 from __future__ import annotations
 
-import pytest
 from app.config import Settings
 from app.providers.llm.stub import StubProvider
 from app.retrieval.base import Retriever
