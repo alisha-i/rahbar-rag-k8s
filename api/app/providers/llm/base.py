@@ -8,8 +8,14 @@ from ...schemas import Answer, Passage
 
 
 class LLMProvider(Protocol):
+    """Abstract protocol for text generation providers.
+
+    Implementations (OllamaProvider, HostedProvider, StubProvider) consume
+    retrieved passages and generate grounded Answer instances.
+    """
+
     name: str
 
     def generate(self, question: str, passages: list[Passage]) -> Answer:
-        """Answer the question from the passages, as an `Answer`."""
+        """Answer the question from the passages, producing a validated Answer schema."""
         ...
