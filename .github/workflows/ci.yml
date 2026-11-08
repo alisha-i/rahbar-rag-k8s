@@ -120,9 +120,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Create kind ephemeral cluster
-        uses: helm/kind-action@v1.10.0
+        uses: helm/kind-action@v1.12.0
         with:
+          version: v0.27.0
+          node_image: kindest/node:v1.32.2
           cluster_name: kind-rahbar
+          wait: 180s
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
