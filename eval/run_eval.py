@@ -54,7 +54,10 @@ def _match_section(expected_sec: str, candidate_sec: str) -> bool:
 
 def recall_at_k(relevant: list[dict], retrieved: list[dict], k: int) -> float | None:
     """Fraction of the relevant (source, section) pairs found in the top k retrieved.
-    Return None when the question has no relevant passages (must-abstain questions)."""
+
+    Computes standard IR recall@k metric. Returns None when the question has
+    no relevant passages (e.g. for must-abstain negative test probes).
+    """
     if not relevant:
         return None
 

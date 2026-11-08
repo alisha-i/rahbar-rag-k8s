@@ -133,3 +133,12 @@ This document details four intentional fault injections across the RAHBAR pipeli
      === END EVIDENCE ===
      ```
   3. Validated citations strictly in `_validate_citations()`: any citation not strictly matching a retrieved passage `(source, section)` is filtered out before delivering the response.
+
+---
+
+## 7. Collaborative Defensive Audits & Edge Scenarios
+
+During regression testing, we verified additional defensive safeguards:
+- **Empty Retrieval Guard:** Confirmed that queries yielding 0 relevant passages trigger honest abstention without calling the LLM provider.
+- **Provider Timeout Isolation:** Simulated external model unresponsiveness and verified that the 30-second client timeout triggers the safe fallback response.
+- **Redis Disconnection Resilience:** Confirmed that transient Redis cache outages do not crash query serving; the system degrades to direct vector retrieval.

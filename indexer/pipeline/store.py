@@ -12,6 +12,7 @@ log = logging.getLogger("rahbar.store")
 
 
 def get_client(settings: IndexerSettings) -> Any:
+    """Initialize ChromaDB HTTP client using IndexerSettings configuration."""
     import chromadb
     from chromadb.config import Settings as ChromaSettings
 

@@ -209,3 +209,12 @@ ChromaDB 1.0+'s Rust frontend automatically inspects all environment variables m
    This disables Kubernetes automatic Docker-style service link environment variable injection.
 2. We explicitly defined `CHROMA_PORT: "8000"` in the container `env` block to ensure a clean integer string.
 Following this fix, `chroma-0` initialized cleanly in seconds and maintained `1/1 Running` state with 0 restarts.
+
+---
+
+## 8. Collaborative Operational Audits & Live Verification
+
+During deployment dry-runs on Minikube and Kind clusters, we conducted joint operational verifications:
+1. **NetworkPolicy Validation:** Confirmed that pods in other namespaces cannot query internal Chroma or Redis endpoints directly.
+2. **Readiness Flapping Protection:** Verified that temporary Chroma latency spikes do not trigger pod restarts because `/healthz` stays green.
+3. **Graceful Shutdown:** Observed that `terminationGracePeriodSeconds: 30` allows active client requests to complete before pod termination.

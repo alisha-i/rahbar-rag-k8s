@@ -14,13 +14,23 @@ router = APIRouter()
 
 @router.get("/healthz")
 def healthz() -> dict[str, str]:
-    """Is the process alive? Must never touch Chroma, Redis or the LLM."""
+    """Liveness probe endpoint.
+
+    Returns HTTP 200 alive status to kubelet if asyncio event loop is responsive.
+    Must never touch external dependencies (Chroma, Redis, or LLM providers).
+    """
     return {"status": "alive"}
 
 
 @router.get("/readyz")
 def readyz(request: Request, response: Response) -> dict[str, Any]:
-    """Readiness: checks Chroma reachable, collection non-empty, model pin matches, Redis reachable."""
+    """Readiness probe endpoint.
+
+    Verifies external dependencies before receiving traffic:
+    1. ChromaDB is reachable and target collection is non-empty.
+    2. Embedded model pin matches collection metadata pin.
+    3. Redis cache layer is responsive.
+    """
     settings = request.app.state.settings
     checks: dict[str, Any] = {}
 
