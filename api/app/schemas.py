@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field
 
 
 class AskRequest(BaseModel):
-    question: str = Field(min_length=3, max_length=500)
+    question: str = Field(min_length=3, max_length=500, description="Natural language inquiry regarding university regulations.")
 
 
 class Passage(BaseModel):
@@ -29,9 +29,9 @@ class Passage(BaseModel):
 
 
 class Citation(BaseModel):
-    source: str
-    section: str
-    page: int | None = None
+    source: str = Field(description="Origin document filename.")
+    section: str = Field(description="Document heading or clause title.")
+    page: int | None = Field(default=None, description="Page number within source document if available.")
 
 
 class Answer(BaseModel):
