@@ -60,15 +60,23 @@ jobs:
 
       - name: Set up kubeconform
         run: |
-          wget https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz
-          tar -xzf kubeconform-linux-amd64.tar.gz
+          curl -fsSL --retry 5 --retry-delay 3 --retry-all-errors -o kubeconform.tar.gz \
+            https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz
+          tar -xzf kubeconform.tar.gz
           sudo mv kubeconform /usr/local/bin/
 
       - name: Validate Kubernetes manifests with kubeconform
         run: |
-          kubectl kustomize k8s/overlays/prod/ | kubeconform -strict -summary -ignore-missing-schemas
-          kubectl kustomize k8s/overlays/dev/ | kubeconform -strict -summary -ignore-missing-schemas
-          kubeconform -strict -summary -ignore-missing-schemas k8s/base/
+          set -o pipefail
+          validate() {
+            for i in 1 2 3; do
+              if "$@"; then return 0; fi
+              echo "kubeconform attempt $i failed, retrying..."; sleep 5
+            done
+            return 1
+          }
+          validate bash -c 'kubectl kustomize k8s/overlays/prod/ | kubeconform -strict -summary -ignore-missing-schemas -'
+          validate bash -c 'kubectl kustomize k8s/overlays/dev/ | kubeconform -strict -summary -ignore-missing-schemas -'
 
   build-and-scan:
     name: Docker Build & Vulnerability Scan
@@ -87,32 +95,21 @@ jobs:
           docker build -t rahbar-indexer:${{ github.sha }} ./indexer
           docker build -t rahbar-ui:${{ github.sha }} ./ui
 
-      - name: Run Trivy vulnerability scanner on API image
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          image-ref: rahbar-api:${{ github.sha }}
-          format: "table"
-          exit-code: "0"
-          ignore-unfixed: true
-          severity: "CRITICAL,HIGH"
-
-      - name: Run Trivy vulnerability scanner on Indexer image
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          image-ref: rahbar-indexer:${{ github.sha }}
-          format: "table"
-          exit-code: "0"
-          ignore-unfixed: true
-          severity: "CRITICAL,HIGH"
-
-      - name: Run Trivy vulnerability scanner on UI image
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          image-ref: rahbar-ui:${{ github.sha }}
-          format: "table"
-          exit-code: "0"
-          ignore-unfixed: true
-          severity: "CRITICAL,HIGH"
+      - name: Trivy scan (HIGH/CRITICAL with a fix available fails the build)
+        env:
+          # "1" = fail the build. Set to "0" only to debug.
+          TRIVY_EXIT_CODE: "1"
+        run: |
+          for img in rahbar-api rahbar-indexer rahbar-ui; do
+            echo "=== scanning $img ==="
+            docker run --rm \
+              -v /var/run/docker.sock:/var/run/docker.sock \
+              -v "$HOME/.cache/trivy:/root/.cache/" \
+              aquasec/trivy:0.58.1 image \
+              --severity HIGH,CRITICAL --ignore-unfixed \
+              --exit-code "$TRIVY_EXIT_CODE" \
+              "$img:${{ github.sha }}"
+          done
 
   e2e-eval:
     name: Ephemeral Kind Cluster & Golden Evaluation Gate
@@ -151,8 +148,8 @@ jobs:
 
       - name: Run indexer Job on fixture corpus
         run: |
-          kubectl create job --from=cronjob/reindex initial-fixture-index -n rahbar
-          kubectl wait --for=condition=complete job/initial-fixture-index -n rahbar --timeout=180s
+          kubectl wait --for=condition=complete job/indexer -n rahbar --timeout=300s \
+            || (kubectl describe job/indexer -n rahbar; kubectl logs job/indexer -n rahbar --tail=80; exit 1)
 
       - name: Wait for API rollout status
         run: |

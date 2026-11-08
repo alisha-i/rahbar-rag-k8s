@@ -12,59 +12,45 @@ env:
 
 jobs:
   test:
-    name: Verify Pre-deployment Gates
+    name: Test
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
-      - name: Install test dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r api/requirements.txt -r indexer/requirements.txt pytest pytest-cov Pillow
-
-      - name: Run test suite with coverage gate
+      - name: Install dependencies
+        run: pip install -r api/requirements.txt -r indexer/requirements.txt pytest pytest-cov Pillow
+      - name: Run tests (60% coverage gate on the api app)
         run: |
           PYTHONPATH=api python -m pytest api/tests --cov=app --cov-fail-under=60
           PYTHONPATH=indexer python -m pytest indexer/tests
 
   build-push:
-    name: Build & Push Images
-    needs: [test]
+    name: Build and push images (tagged with commit SHA)
+    needs: test
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to Docker Hub Registry
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Build and push API image
+      - name: Push api
         uses: docker/build-push-action@v5
         with:
           context: ./api
           push: true
           tags: ${{ env.DH_USER }}/rahbar-api:${{ github.sha }}
-
-      - name: Build and push Indexer image
+      - name: Push indexer
         uses: docker/build-push-action@v5
         with:
           context: ./indexer
           push: true
           tags: ${{ env.DH_USER }}/rahbar-indexer:${{ github.sha }}
-
-      - name: Build and push UI image
+      - name: Push ui
         uses: docker/build-push-action@v5
         with:
           context: ./ui
@@ -72,46 +58,41 @@ jobs:
           tags: ${{ env.DH_USER }}/rahbar-ui:${{ github.sha }}
 
   deploy:
-    name: Deploy to Ephemeral Cluster & Verify Rollout
-    needs: [build-push]
+    name: Deploy to ephemeral cluster and smoke test
+    needs: build-push
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Create kind ephemeral cluster
+      - uses: actions/checkout@v4
+      - name: Create kind cluster
         uses: helm/kind-action@v1.10.0
         with:
           cluster_name: kind-rahbar-cd
-
-      - name: Set up Kustomize
-        run: |
-          if ! command -v kustomize &> /dev/null; then
-            curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
-            sudo mv kustomize /usr/local/bin/
-          fi
-
       - name: Pin prod overlay to this commit SHA
         working-directory: k8s/overlays/prod
         run: |
+          if ! command -v kustomize >/dev/null 2>&1; then
+            curl -fsSL --retry 5 "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
+            sudo mv kustomize /usr/local/bin/
+          fi
           kustomize edit set image \
             rahbar-api=${DH_USER}/rahbar-api:${{ github.sha }} \
             rahbar-indexer=${DH_USER}/rahbar-indexer:${{ github.sha }} \
             rahbar-ui=${DH_USER}/rahbar-ui:${{ github.sha }}
-
-      - name: Apply production manifests
+          kubectl kustomize . | grep "image:"
+      - name: Apply prod manifests
+        run: kubectl apply -k k8s/overlays/prod/
+      - name: Wait for the indexer Job (API is not ready until Chroma has data)
         run: |
-          kubectl apply -k k8s/overlays/prod/
-
-      - name: Index fixture corpus, then wait for rollout
+          kubectl wait --for=condition=complete job/indexer -n rahbar --timeout=300s \
+            || (kubectl describe job/indexer -n rahbar; kubectl logs job/indexer -n rahbar --tail=80; exit 1)
+      - name: Wait for rollouts
         run: |
-          kubectl create job --from=cronjob/reindex cd-index-${{ github.run_id }} -n rahbar
-          kubectl wait --for=condition=complete job/cd-index-${{ github.run_id }} -n rahbar --timeout=300s
           kubectl rollout status deployment/api -n rahbar --timeout=180s
           kubectl rollout status deployment/ui -n rahbar --timeout=120s
-
-      - name: Smoke test API readiness
+      - name: Smoke test
         run: |
           kubectl port-forward svc/api 8000:8000 -n rahbar &
           sleep 5
+          curl -fsS http://127.0.0.1:8000/healthz
           curl -fsS http://127.0.0.1:8000/readyz
+          kubectl get pods -n rahbar
