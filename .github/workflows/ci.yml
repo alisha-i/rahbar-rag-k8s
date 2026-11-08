@@ -46,13 +46,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r api/requirements.txt -r indexer/requirements.txt pytest pytest-cov Pillow
 
-      - name: Run indexer unit tests
+      - name: Run test suite with coverage gate
         run: |
+          PYTHONPATH=api python -m pytest api/tests --cov=app --cov-fail-under=60
           PYTHONPATH=indexer python -m pytest indexer/tests
-
-      - name: Run API unit & cache tests
-        run: |
-          PYTHONPATH=api python -m pytest api/tests
 
   manifest-validation:
     name: Kubeconform Manifest Validation
@@ -69,6 +66,8 @@ jobs:
 
       - name: Validate Kubernetes manifests with kubeconform
         run: |
+          kubectl kustomize k8s/overlays/prod/ | kubeconform -strict -summary -ignore-missing-schemas
+          kubectl kustomize k8s/overlays/dev/ | kubeconform -strict -summary -ignore-missing-schemas
           kubeconform -strict -summary -ignore-missing-schemas k8s/base/
 
   build-and-scan:
@@ -82,20 +81,37 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build API image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./api
-          push: false
-          tags: rahbar-api:${{ github.sha }}
-          load: true
+      - name: Build local container images
+        run: |
+          docker build -t rahbar-api:${{ github.sha }} ./api
+          docker build -t rahbar-indexer:${{ github.sha }} ./indexer
+          docker build -t rahbar-ui:${{ github.sha }} ./ui
 
       - name: Run Trivy vulnerability scanner on API image
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.28.0
         with:
           image-ref: rahbar-api:${{ github.sha }}
           format: "table"
           exit-code: "0"
+          ignore-unfixed: true
+          severity: "CRITICAL,HIGH"
+
+      - name: Run Trivy vulnerability scanner on Indexer image
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: rahbar-indexer:${{ github.sha }}
+          format: "table"
+          exit-code: "0"
+          ignore-unfixed: true
+          severity: "CRITICAL,HIGH"
+
+      - name: Run Trivy vulnerability scanner on UI image
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: rahbar-ui:${{ github.sha }}
+          format: "table"
+          exit-code: "0"
+          ignore-unfixed: true
           severity: "CRITICAL,HIGH"
 
   e2e-eval:
