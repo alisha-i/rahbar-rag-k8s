@@ -93,11 +93,21 @@ def main() -> int:
         pod=os.environ.get("HOSTNAME", "-"))
     started = time.perf_counter()
     try:
+        from .store import get_client
+
+        # Wait for Chroma to be reachable before indexing
+        client = get_client(settings)
+        for attempt in range(1, 31):
+            try:
+                client.heartbeat()
+                break
+            except Exception:
+                time.sleep(2)
+
         if args.dummy:
             from .dummy import write_dummy_index
-            from .store import get_client
 
-            count = write_dummy_index(settings, get_client(settings))
+            count = write_dummy_index(settings, client)
         else:
             count = run_pipeline(settings)
     except NotImplementedError as exc:
