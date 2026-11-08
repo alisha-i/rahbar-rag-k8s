@@ -24,7 +24,11 @@ FOLLOWUP_PATTERNS = re.compile(
 
 
 def cosine_similarity(vec_a: list[float], vec_b: list[float]) -> float:
-    """Compute cosine similarity between two vectors."""
+    """Compute cosine similarity between two embedding vectors.
+
+    Returns a normalized value in [0.0, 1.0]. A score >= settings.cache_threshold (0.85)
+    triggers a semantic cache hit.
+    """
     if not vec_a or not vec_b or len(vec_a) != len(vec_b):
         return 0.0
     dot = sum(a * b for a, b in zip(vec_a, vec_b))
