@@ -70,6 +70,19 @@ jobs:
           node_image: kindest/node:v1.32.2
           cluster_name: kind-rahbar-cd
           wait: 180s
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Pull release images and load into kind
+        run: |
+          docker pull ${{ env.DH_USER }}/rahbar-api:${{ github.sha }}
+          docker pull ${{ env.DH_USER }}/rahbar-indexer:${{ github.sha }}
+          docker pull ${{ env.DH_USER }}/rahbar-ui:${{ github.sha }}
+          kind load docker-image ${{ env.DH_USER }}/rahbar-api:${{ github.sha }} --name kind-rahbar-cd
+          kind load docker-image ${{ env.DH_USER }}/rahbar-indexer:${{ github.sha }} --name kind-rahbar-cd
+          kind load docker-image ${{ env.DH_USER }}/rahbar-ui:${{ github.sha }} --name kind-rahbar-cd
       - name: Pin prod overlay to this commit SHA
         working-directory: k8s/overlays/prod
         run: |
@@ -84,6 +97,10 @@ jobs:
           kubectl kustomize . | grep "image:"
       - name: Apply prod manifests
         run: kubectl apply -k k8s/overlays/prod/
+      - name: Wait for data tier rollout (Chroma and Redis)
+        run: |
+          kubectl rollout status statefulset/chroma -n rahbar --timeout=180s
+          kubectl rollout status deployment/redis -n rahbar --timeout=120s
       - name: Wait for the indexer Job (API is not ready until Chroma has data)
         run: |
           kubectl wait --for=condition=complete job/indexer -n rahbar --timeout=300s \
@@ -96,6 +113,6 @@ jobs:
         run: |
           kubectl port-forward svc/api 8000:8000 -n rahbar &
           sleep 5
-          curl -fsS http://127.0.0.1:8000/healthz
-          curl -fsS http://127.0.0.1:8000/readyz
+          curl --retry 5 --retry-connrefused --retry-delay 2 -fsS http://127.0.0.1:8000/healthz
+          curl --retry 5 --retry-connrefused --retry-delay 2 -fsS http://127.0.0.1:8000/readyz
           kubectl get pods -n rahbar
