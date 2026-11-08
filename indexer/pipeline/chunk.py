@@ -35,7 +35,6 @@ def chunk(doc: Document, size: int, overlap: int) -> list[Chunk]:
     keeping each chunk under `size` tokens, with `overlap` tokens shared between neighbours.
 
     Preserves section titles, version metadata, and page numbers across sliding windows.
-    """
     Every chunk carries source, section, page, doc_version, and superseded metadata.
     """
     chunks: list[Chunk] = []
