@@ -49,10 +49,10 @@ class StubProvider:
             )
 
         # 3. Out-of-scope / Absent topic abstention
-        if any(term in q for term in ["hostel", "mess", "bus", "transport", "suburban"]):
+        if any(term in q for term in ["weather", "mausam", "barish", "rain", "temperature", "forecast", "cricket", "match", "movie", "song", "hostel", "mess", "bus", "transport", "suburban"]):
             return Answer(
                 reasoning="Topic is completely absent from all indexed university documents.",
-                answer="The provided university documents do not contain sufficient information regarding on-campus hostel accommodation, mess charges, or suburban transport routes.",
+                answer="The provided university documents do not contain sufficient information to answer this question.",
                 citations=[],
                 answered_from_context=False,
                 confidence="low",
@@ -122,8 +122,16 @@ class StubProvider:
             answer_text = "Penalties for academic dishonesty range from course cancellation to permanent expulsion."
         elif "percentage score" in q or "grading" in q:
             answer_text = "Under the 2024 grading policy, the minimum percentage score for an A grade is 85%."
-        else:
+        elif "stub" in q or "stub-handbook" in top.source:
             answer_text = f"According to {top.source} ({top.section}): {top.text}"
+        else:
+            return Answer(
+                reasoning="Question cannot be answered from the provided university documents.",
+                answer="The provided university documents do not contain sufficient information to answer this question.",
+                citations=[],
+                answered_from_context=False,
+                confidence="low",
+            )
 
         return Answer(
             reasoning=f"Grounded directly in {top.source} ({top.section})",

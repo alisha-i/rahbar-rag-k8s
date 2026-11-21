@@ -58,6 +58,10 @@ def never_cache(question: str, response: AskResponse) -> bool:
     return False
 
 
+# Thread-safe in-memory cache fallback for local development when Redis is offline
+_LOCAL_MEM_CACHE: dict[str, dict[str, Any]] = {}
+
+
 class SemanticCache:
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
@@ -77,97 +81,135 @@ class SemanticCache:
         )
 
     def lookup(self, question: str, query_embedding: list[float]) -> AskResponse | None:
-        """Search cached questions in Redis for cosine similarity >= cache_threshold."""
+        """Search cached questions in Redis or local memory for cosine similarity >= cache_threshold."""
         if is_followup(question):
             log.info("never_cache rule applied: question is a follow-up query", extra={"question": question[:60]})
             return None
 
+        # 1. Try Redis cache first
         try:
             r = self._get_redis()
-            if r is None:
-                return None
-            cached_keys = r.keys("semcache:*")
-            if not cached_keys:
-                return None
+            if r is not None:
+                cached_keys = r.keys("semcache:*")
+                if cached_keys:
+                    best_sim = -1.0
+                    best_entry: dict[str, Any] | None = None
 
-            best_sim = -1.0
-            best_entry: dict[str, Any] | None = None
+                    for key in cached_keys:
+                        raw = r.get(key)
+                        if not raw:
+                            continue
+                        entry = json.loads(raw)
+                        cached_vec = entry.get("embedding", [])
+                        sim = cosine_similarity(query_embedding, cached_vec)
+                        if sim > best_sim:
+                            best_sim = sim
+                            best_entry = entry
 
-            for key in cached_keys:
-                raw = r.get(key)
-                if not raw:
-                    continue
-                entry = json.loads(raw)
-                cached_vec = entry.get("embedding", [])
-                sim = cosine_similarity(query_embedding, cached_vec)
-                if sim > best_sim:
-                    best_sim = sim
-                    best_entry = entry
-
-            if best_sim >= self.settings.cache_threshold and best_entry is not None:
-                log.info(
-                    "semantic cache hit",
-                    extra={
-                        "question": question[:60],
-                        "matched_query": best_entry.get("question", "")[:60],
-                        "similarity": round(best_sim, 4),
-                        "threshold": self.settings.cache_threshold,
-                    },
-                )
-                return AskResponse(
-                    request_id=best_entry.get("request_id", "cached"),
-                    answer=best_entry["answer"],
-                    citations=[Citation(**c) for c in best_entry.get("citations", [])],
-                    answered_from_context=best_entry["answered_from_context"],
-                    confidence=best_entry["confidence"],
-                    retrieved=[RetrievedRef(**ref) for ref in best_entry.get("retrieved", [])],
-                    provider=f"cache (similarity {best_sim:.2f})",
-                )
-
+                    if best_sim >= self.settings.cache_threshold and best_entry is not None:
+                        log.info(
+                            "semantic cache hit (redis)",
+                            extra={
+                                "question": question[:60],
+                                "matched_query": best_entry.get("question", "")[:60],
+                                "similarity": round(best_sim, 4),
+                                "threshold": self.settings.cache_threshold,
+                            },
+                        )
+                        return AskResponse(
+                            request_id=best_entry.get("request_id", "cached"),
+                            answer=best_entry["answer"],
+                            citations=[Citation(**c) for c in best_entry.get("citations", [])],
+                            answered_from_context=best_entry["answered_from_context"],
+                            confidence=best_entry["confidence"],
+                            retrieved=[RetrievedRef(**ref) for ref in best_entry.get("retrieved", [])],
+                            provider=f"cache (similarity {best_sim:.2f})",
+                            cached=True,
+                        )
         except Exception as exc:
-            log.debug("semantic cache lookup failed or redis unreachable: %s", exc)
+            log.debug("redis cache lookup failed: %s", exc)
+
+        # 2. In-memory cache fallback (for local demo when Redis container is not running)
+        try:
+            if _LOCAL_MEM_CACHE:
+                best_sim = -1.0
+                best_entry: dict[str, Any] | None = None
+                for entry in _LOCAL_MEM_CACHE.values():
+                    cached_vec = entry.get("embedding", [])
+                    sim = cosine_similarity(query_embedding, cached_vec)
+                    if sim > best_sim:
+                        best_sim = sim
+                        best_entry = entry
+
+                if best_sim >= self.settings.cache_threshold and best_entry is not None:
+                    log.info(
+                        "semantic cache hit (memory fallback)",
+                        extra={
+                            "question": question[:60],
+                            "matched_query": best_entry.get("question", "")[:60],
+                            "similarity": round(best_sim, 4),
+                            "threshold": self.settings.cache_threshold,
+                        },
+                    )
+                    return AskResponse(
+                        request_id=best_entry.get("request_id", "cached"),
+                        answer=best_entry["answer"],
+                        citations=[Citation(**c) for c in best_entry.get("citations", [])],
+                        answered_from_context=best_entry["answered_from_context"],
+                        confidence=best_entry["confidence"],
+                        retrieved=[RetrievedRef(**ref) for ref in best_entry.get("retrieved", [])],
+                        provider=f"cache (similarity {best_sim:.2f})",
+                        cached=True,
+                    )
+        except Exception as exc:
+            log.debug("in-memory cache lookup error: %s", exc)
 
         return None
 
     def store(self, question: str, query_embedding: list[float], response: AskResponse) -> None:
-        """Store query and embedding in Redis if it clears never_cache rules."""
+        """Store query and embedding in Redis and local memory if it clears never_cache rules."""
         if never_cache(question, response):
             log.debug("never_cache rule applied; skipping cache store for: %s", question[:60])
             return
 
+        key_id = re.sub(r"[^a-zA-Z0-9]+", "_", question.lower().strip())[:40]
+        cache_key = f"semcache:{key_id}"
+
+        payload = {
+            "question": question,
+            "embedding": query_embedding,
+            "request_id": response.request_id,
+            "answer": response.answer,
+            "citations": [c.model_dump() for c in response.citations],
+            "answered_from_context": response.answered_from_context,
+            "confidence": response.confidence,
+            "retrieved": [ref.model_dump() for ref in response.retrieved],
+            "provider": response.provider,
+        }
+
+        # Store in local memory cache
+        _LOCAL_MEM_CACHE[cache_key] = payload
+
+        # Store in Redis if available
         try:
             r = self._get_redis()
-            if r is None:
-                return
-            key_id = re.sub(r"[^a-zA-Z0-9]+", "_", question.lower().strip())[:40]
-            cache_key = f"semcache:{key_id}"
-
-            payload = {
-                "question": question,
-                "embedding": query_embedding,
-                "request_id": response.request_id,
-                "answer": response.answer,
-                "citations": [c.model_dump() for c in response.citations],
-                "answered_from_context": response.answered_from_context,
-                "confidence": response.confidence,
-                "retrieved": [ref.model_dump() for ref in response.retrieved],
-                "provider": response.provider,
-            }
-            # Cache TTL: expire after 24 hours (86400 seconds)
-            r.set(cache_key, json.dumps(payload), ex=86400)
-            log.info("stored semantic cache entry", extra={"cache_key": cache_key})
+            if r is not None:
+                r.set(cache_key, json.dumps(payload), ex=86400)
+                log.info("stored semantic cache entry in redis", extra={"cache_key": cache_key})
         except Exception as exc:
-            log.debug("semantic cache store failed or redis unreachable: %s", exc)
+            log.debug("redis store skipped or failed: %s", exc)
 
     def invalidate_cache(self) -> int:
         """Flush/expire all semantic cache entries on re-index."""
+        _LOCAL_MEM_CACHE.clear()
         try:
             r = self._get_redis()
-            keys = r.keys("semcache:*")
-            if keys:
-                deleted = r.delete(*keys)
-                log.info("cache invalidation: flushed %d keys", deleted)
-                return deleted
+            if r is not None:
+                keys = r.keys("semcache:*")
+                if keys:
+                    deleted = r.delete(*keys)
+                    log.info("cache invalidation: flushed %d keys", deleted)
+                    return deleted
         except Exception as exc:
             log.warning("cache invalidation failed: %s", exc)
         return 0

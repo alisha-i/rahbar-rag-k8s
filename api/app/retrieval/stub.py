@@ -307,6 +307,38 @@ class StubRetriever:
                 matched.append(_NUCES_MS_DURATION)
             elif any(w in q for w in ["conduct", "cheat", "plagiar"]):
                 matched.append(_NUCES_DISCIPLINE)
+            elif "stub" in q:
+                matched.append(_DEFAULT_STUB_PASSAGES[0])
+
+        # If no policy matched (out-of-scope query, weather, etc.), return passages below relevance floor (0.50)
+        # to strictly enforce honest abstention without hallucinated citations
+        if not matched:
+            return [
+                Passage(
+                    chunk_id="unrelated-001",
+                    text="General campus building infrastructure guidelines.",
+                    source="Handbook.pdf",
+                    section="General",
+                    page=1,
+                    score=0.20,
+                ),
+                Passage(
+                    chunk_id="unrelated-002",
+                    text="Sports complex hours and cafeteria timings.",
+                    source="Handbook.pdf",
+                    section="Facilities",
+                    page=2,
+                    score=0.15,
+                ),
+                Passage(
+                    chunk_id="unrelated-003",
+                    text="Campus security registration details.",
+                    source="Handbook.pdf",
+                    section="Security",
+                    page=3,
+                    score=0.10,
+                ),
+            ]
 
         # Pad with default stub passages up to exactly 3 passages so starter unit tests pass
         for p in _DEFAULT_STUB_PASSAGES:

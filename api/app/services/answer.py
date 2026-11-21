@@ -90,7 +90,7 @@ def answer_question(
     cached = _check_cache(question, settings)
     if cached:
         CACHE_HITS.labels(type="semantic").inc()
-        return cached
+        return cached.model_copy(update={"cached": True})
     CACHE_MISSES.inc()
 
     # Step 3 & 4: Retrieve top-k chunks from Chroma (with superseded filter)
@@ -137,7 +137,11 @@ def answer_question(
             )
 
     # Step 8: Validate citations (Hard Rule 5)
-    validated_citations = _validate_citations(answer.citations, passages)
+    # If the system or provider abstains (answered_from_context: false), citations MUST be strictly empty
+    if not answer.answered_from_context:
+        validated_citations: list[Citation] = []
+    else:
+        validated_citations = _validate_citations(answer.citations, passages)
 
     # Structured observability log per request (section 4.8)
     log.info(
@@ -166,6 +170,7 @@ def answer_question(
             for p in passages
         ],
         provider=provider.name,
+        cached=False,
     )
 
     # Store in semantic cache if safe
