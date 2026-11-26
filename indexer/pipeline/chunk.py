@@ -12,6 +12,16 @@ HEADING_PATTERN = re.compile(
 )
 
 
+def _is_heading(line: str) -> bool:
+    """Markdown headings always count. A numbered line ("1.1 A student must attend ...") is a
+    clause, not a heading, when it reads like a sentence: it ends with punctuation or is long.
+    Without this, every clause became its own "section" and citations named sentences."""
+    line = line.strip()
+    if line.startswith("#"):
+        return True
+    return len(line) <= 70 and len(line.split()) <= 10 and not line.endswith((".", ";", ":", ","))
+
+
 def _approx_token_count(text: str) -> int:
     """Approximate token count: standard rule of thumb is ~4 characters per token or whitespace words * 1.3."""
     words = text.split()
@@ -48,7 +58,7 @@ def chunk(doc: Document, size: int, overlap: int) -> list[Chunk]:
         # Detect sections / headings within this page
         # Break page into (heading, body) pairs
         sections: list[tuple[str, str]] = []
-        heading_matches = list(HEADING_PATTERN.finditer(raw_text))
+        heading_matches = [m for m in HEADING_PATTERN.finditer(raw_text) if _is_heading(m.group(0))]
 
         if not heading_matches:
             sections.append(("General", raw_text))
