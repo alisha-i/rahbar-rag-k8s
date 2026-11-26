@@ -5,6 +5,8 @@ namespace: rahbar
 
 resources:
   - namespace.yaml
+  - corpus-pvc.yaml
+  - gate-configmap.yaml
   - serviceaccounts.yaml
   - configmap.yaml
   - services.yaml

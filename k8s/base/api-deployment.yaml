@@ -19,6 +19,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: api
+        rahbar/role: api-server   # NetworkPolicies select on this (live and candidate API)
     spec:
       serviceAccountName: rahbar-api
       automountServiceAccountToken: false
@@ -51,6 +52,13 @@ spec:
             - configMapRef:
                 name: rahbar-config
           env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            # One trace file per pod on the results PVC (F4); stdout gets the same JSON lines.
+            - name: TRACE_FILE
+              value: "/data/traces/$(POD_NAME).jsonl"
             - name: LLM_API_KEY
               valueFrom:
                 secretKeyRef:
@@ -85,6 +93,11 @@ spec:
           volumeMounts:
             - name: tmp
               mountPath: /tmp
+            - name: data
+              mountPath: /data
       volumes:
         - name: tmp
           emptyDir: {}
+        - name: data
+          persistentVolumeClaim:
+            claimName: eval-results-pvc

@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rahbar-gate-thresholds
+  namespace: rahbar
+  labels:
+    app.kubernetes.io/name: release-gate
+data:
+  # Same keys and reasoning as eval/gate_config.yaml. Demo (F2): raise min_faithfulness to 0.99
+  # with `kubectl edit configmap rahbar-gate-thresholds -n rahbar`, re-run the eval Job, and the
+  # gate flips from PASS to FAIL with the same image.
+  gate_config.yaml: |
+    gate_thresholds:
+      max_recall5_drop: 0.02
+      min_faithfulness: 0.85
+      max_p95_latency_ms: 15000
+      min_abstention_correctness: 1.0
+      abstention_not_below_baseline: true
+      min_citation_validity: 0.95

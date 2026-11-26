@@ -1,0 +1,26 @@
+# CI overlay (ci.yml e2e-eval): the kind cluster on a GitHub runner has no Ollama, so the
+# pipeline runs for real (indexer Job -> Chroma -> API retrieval) with a deterministic hash
+# "embedding model" (hash-ci-768, identical in indexer and API, so the pin still holds) and the
+# stub LLM. Never use this overlay for numbers you report.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: rahbar
+
+resources:
+  - ../../base
+
+patches:
+  - target:
+      kind: ConfigMap
+      name: rahbar-config
+    patch: |-
+      - op: replace
+        path: /data/LLM_PROVIDER
+        value: stub
+      - op: replace
+        path: /data/EMBED_MODEL
+        value: hash-ci-768
+      - op: replace
+        path: /data/RELEVANCE_FLOOR
+        value: "0.25"

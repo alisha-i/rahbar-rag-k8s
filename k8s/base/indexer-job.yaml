@@ -1,3 +1,7 @@
+# A2 4.2 / A3 F2: ingestion WITH verification (Part A) runs as a Job. It is the only writer to
+# Chroma. Re-run it (incremental: an unchanged corpus embeds 0 chunks) with
+#   kubectl delete job indexer -n rahbar --ignore-not-found && kubectl apply -f k8s/base/indexer-job.yaml
+# or from the CronJob:  kubectl create job --from=cronjob/reindex manual-reindex-$(date +%s) -n rahbar
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -5,12 +9,15 @@ metadata:
   namespace: rahbar
   labels:
     app.kubernetes.io/name: indexer
+    app.kubernetes.io/part-of: rahbar-ragops
 spec:
-  backoffLimit: 3
+  backoffLimit: 2
+  ttlSecondsAfterFinished: 86400
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: indexer
+        app.kubernetes.io/name: indexer   # NetworkPolicy: only this label may write to Chroma
+        app.kubernetes.io/part-of: rahbar-ragops
     spec:
       restartPolicy: OnFailure
       serviceAccountName: rahbar-indexer
@@ -21,21 +28,42 @@ spec:
         runAsUser: 10001
         runAsGroup: 10001
         fsGroup: 10001
+      initContainers:
+        # The PVC hides /corpus in the image, so seed it once from /seed (data lake on the PVC, F1).
+        - name: seed-corpus
+          image: rahbar-indexer:dev
+          imagePullPolicy: IfNotPresent
+          command: ["sh", "-c", "mkdir -p /corpus && if [ ! -f /corpus/.seeded ]; then cp -n /seed/corpus/* /corpus/ && touch /corpus/.seeded && echo seeded corpus; else echo corpus already seeded; fi; mkdir -p /data/results /data/traces"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests: {cpu: 10m, memory: 16Mi}
+            limits: {cpu: 100m, memory: 64Mi}
+          volumeMounts:
+            - name: corpus-volume
+              mountPath: /corpus
+            - name: data
+              mountPath: /data
       containers:
         - name: indexer
           image: rahbar-indexer:dev
           imagePullPolicy: IfNotPresent
-          args: ["--dummy"]
+          command: ["python", "-m", "pipeline.run"]
+          args: ["--corpus-dir", "/corpus"]
           securityContext:
             runAsNonRoot: true
-            readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
             capabilities:
-              drop:
-                - ALL
+              drop: ["ALL"]
           envFrom:
             - configMapRef:
                 name: rahbar-config
+          env: []
+          # Measured with `kubectl top pod` during a full run (copy the numbers into the report, F5).
           resources:
             requests:
               cpu: 100m
@@ -44,8 +72,18 @@ spec:
               cpu: 1000m
               memory: 1Gi
           volumeMounts:
+            - name: corpus-volume
+              mountPath: /corpus
+            - name: data
+              mountPath: /data
             - name: tmp
               mountPath: /tmp
       volumes:
+        - name: corpus-volume
+          persistentVolumeClaim:
+            claimName: corpus-pvc
+        - name: data
+          persistentVolumeClaim:
+            claimName: eval-results-pvc
         - name: tmp
           emptyDir: {}
