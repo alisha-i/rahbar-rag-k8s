@@ -23,3 +23,13 @@ venv/
 # Local scratch
 *.log
 .DS_Store
+
+# Course PDFs (briefs and the paper) - not part of the repository
+/Assignment*.pdf
+/RAGOps*.pdf
+
+# Generated at runtime by local runs (the real ones come from the cluster PVC via `make a3-collect`)
+api/traces/
+**/.index_state*.json
+corpus/quarantine/
+corpus/archive/
