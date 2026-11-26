@@ -141,3 +141,8 @@ cd indexer && pytest -q      # verification, incremental updates, evaluation, ga
 Architecture decision records are in `docs/adr/`: why the indexer is a Job, the chunking strategy,
 the cache store, and the LLM provider and data governance. `docs/AI-USAGE.md` states how AI tools
 were used.
+## 👥 Authors & Academic Attribution
+- **Student Name:** Alisha Iqbal (`alisha-i`) & Musfirah Hamid (`MUSFIRAH828`)
+- **Institution:** FAST National University of Computer & Emerging Sciences (NUCES)
+- **Course:** CS4032 - Software Construction & Development 
+- **AI Attribution:** Detailed transparency and tool usage documented in [docs/AI-USAGE.md](docs/AI-USAGE.md).
