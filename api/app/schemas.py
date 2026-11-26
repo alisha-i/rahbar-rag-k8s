@@ -26,6 +26,8 @@ class Passage(BaseModel):
     section: str
     page: int | None = None
     score: float = Field(description="Similarity, higher is closer (1 - cosine distance).")
+    doc_version: str | None = None
+    superseded: bool | None = None
 
 
 class Citation(BaseModel):
@@ -52,6 +54,7 @@ class RetrievedRef(BaseModel):
     section: str
     page: int | None = None
     score: float
+    text: str | None = None
 
 
 class AskResponse(BaseModel):
@@ -63,3 +66,13 @@ class AskResponse(BaseModel):
     retrieved: list[RetrievedRef]
     provider: str
     cached: bool = False
+    trace_id: str | None = None
+
+
+class RetrieveResponse(BaseModel):
+    """POST /api/retrieve: retrieval only, no generation. Used by the component-level eval."""
+
+    retrieved: list[RetrievedRef]
+    filters_applied: dict[str, object]
+    collection: str
+    embedding_version: str

@@ -40,6 +40,7 @@ ABSTENTIONS = Counter(
 )
 FALLBACKS = Counter("rahbar_fallbacks_total", "Provider fallback generation events")
 TOKENS = Counter("rahbar_tokens_total", "Estimated tokens processed", ["kind"])
+INJECTIONS = Counter("rahbar_injection_flags_total", "Prompt-injection attempts flagged by the guardrail")
 
 
 @router.get("/metrics")

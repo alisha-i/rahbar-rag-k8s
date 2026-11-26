@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+from typing import Any
 
 import httpx
 from pydantic import ValidationError
@@ -109,7 +110,8 @@ class OllamaProvider:
     def generate(self, question: str, passages: list[Passage]) -> Answer:
         prompt = _build_augmented_prompt(question, passages)
         url = f"{self.settings.ollama_url.rstrip('/')}/api/chat"
-        payload = {
+        content = ""
+        payload: dict[str, Any] = {
             "model": self.settings.llm_model,
             "messages": [{"role": "user", "content": prompt}],
             "options": {"temperature": self.settings.temperature},
@@ -136,7 +138,7 @@ class OllamaProvider:
                 log.warning("Attempt %d failed Pydantic validation: %s", attempt, val_err)
                 if attempt == 1:
                     # Retry once with explicit schema reminder
-                    payload["messages"].append({"role": "assistant", "content": content if "content" in locals() else "{}"})
+                    payload["messages"].append({"role": "assistant", "content": content or "{}"})
                     payload["messages"].append({
                         "role": "user",
                         "content": "Your previous response was not valid JSON conforming to the Answer schema. Return ONLY valid JSON.",
@@ -144,7 +146,7 @@ class OllamaProvider:
             except Exception as exc:
                 log.error("Ollama connection exception on attempt %d: %s", attempt, exc)
 
+        # Section 3.4: retry once, then a SAFE canned response. Never fabricate an answer
+        # from the top passage here: that would look grounded while the model never ran.
         log.error("Ollama generation failed after retry; returning safe canned fallback")
-        from .stub import StubProvider
-
-        return StubProvider().generate(question, passages)
+        return FALLBACK_ANSWER

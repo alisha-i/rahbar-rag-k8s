@@ -49,6 +49,9 @@ class Settings:
 
     log_level: str = "INFO"
 
+    # Observability (A3 Part D / F4): trace lines go to stdout AND to this file on a volume.
+    trace_file: str = field(default_factory=lambda: os.environ.get("TRACE_FILE", "traces/query_traces.jsonl"))
+
 
 def get_settings() -> Settings:
     return Settings(
@@ -69,4 +72,5 @@ def get_settings() -> Settings:
         redis_port=_int("REDIS_PORT", 6379),
         cache_threshold=_float("CACHE_THRESHOLD", 0.85),
         log_level=os.environ.get("LOG_LEVEL", "INFO"),
+        trace_file=os.environ.get("TRACE_FILE", "traces/query_traces.jsonl"),
     )
