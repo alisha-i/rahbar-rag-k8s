@@ -493,6 +493,9 @@ def main() -> int:
     ap.add_argument("--baseline", default=None, help="Baseline result file (default: <output-dir>/latest_baseline.json)")
     ap.add_argument("--output-dir", default=os.environ.get("RESULTS_DIR", "eval/results"))
     ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument("--runs", type=int, default=2, choices=[1, 2],
+                    help="2 (default) measures stochasticity for the baseline (Part B); "
+                         "candidates are compared once against that baseline")
     ap.add_argument("--offline-stub", action="store_true", help="CI only: in-process stub pipeline")
     ap.add_argument("--allow-stub", action="store_true", help="Let --offline-stub write a result file")
     args = ap.parse_args()
@@ -521,9 +524,12 @@ def main() -> int:
         return 2
 
     run1 = run_once(golden, Path(args.benchmark), ask, retrieve, judge, human, args.seed)
-    run2 = run_once(golden, Path(args.benchmark), ask, retrieve, judge, human, args.seed)
-    f1, f2 = _flat(run1), _flat(run2)
-    deltas = {k: round(f2[k] - f1[k], 6) for k in f1 if k in f2}
+    if args.runs == 2:
+        run2 = run_once(golden, Path(args.benchmark), ask, retrieve, judge, human, args.seed)
+        f1, f2 = _flat(run1), _flat(run2)
+        deltas = {k: round(f2[k] - f1[k], 6) for k in f1 if k in f2}
+    else:
+        deltas = {}
 
     ts = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     report: dict[str, Any] = {
@@ -538,7 +544,7 @@ def main() -> int:
         "seed": args.seed,
         **run1,
         "stochasticity": {
-            "runs": 2,
+            "runs": args.runs,
             "deltas": deltas,
             "max_abs_delta": max((abs(v) for v in deltas.values()), default=0.0),
             "note": "Seeds fixed and temperature low; remaining differences come from latency jitter, "

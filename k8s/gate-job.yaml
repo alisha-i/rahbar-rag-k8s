@@ -1,0 +1,56 @@
+# F2: re-apply the release gate to the latest evaluation result with the thresholds from the
+# rahbar-gate-thresholds ConfigMap. Same image, no rebuild: edit the ConfigMap, re-run this Job,
+# and the decision changes. Takes seconds (it does not re-ask the 28 questions).
+#   kubectl delete job rahbar-gate -n rahbar --ignore-not-found; kubectl apply -f k8s/gate-job.yaml
+#   kubectl logs -f job/rahbar-gate -n rahbar
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: rahbar-gate
+  namespace: rahbar
+  labels:
+    app.kubernetes.io/name: eval-job
+    app.kubernetes.io/part-of: rahbar-ragops
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: eval-job
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+      containers:
+        - name: gate
+          image: rahbar-eval:dev
+          imagePullPolicy: IfNotPresent
+          command: ["python", "eval/gate.py"]
+          args: ["--result", "/data/results/latest_baseline.json", "--baseline", "/data/results/none.json",
+                 "--config", "/etc/gate/gate_config.yaml"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests: {cpu: 20m, memory: 64Mi}
+            limits: {cpu: 200m, memory: 128Mi}
+          volumeMounts:
+            - name: gate-config-volume
+              mountPath: /etc/gate
+              readOnly: true
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: gate-config-volume
+          configMap:
+            name: rahbar-gate-thresholds
+        - name: data
+          persistentVolumeClaim:
+            claimName: eval-results-pvc
