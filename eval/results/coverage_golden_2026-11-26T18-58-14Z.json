@@ -1,0 +1,432 @@
+{
+  "golden": "eval\\golden.jsonl",
+  "live": "eval\\live_queries.jsonl",
+  "threshold": 0.75,
+  "target": 0.85,
+  "embedder": "hash-fallback",
+  "embed_model": "nomic-embed-text",
+  "coverage": 0.075,
+  "covered": 3,
+  "total": 40,
+  "uncovered_by_topic": {
+    "Miscellaneous Uncategorized Inquiries": [
+      "How many absences are allowed before getting an FA in a course?",
+      "What happens if my attendance drops to 78% in Object Oriented Programming?",
+      "What is the minimum CGPA to stay out of academic warning?",
+      "If I am on probation for two semesters in a row, am I dismissed from university?",
+      "How many consecutive warning semesters result in expulsion from the degree?",
+      "If I repeat Data Structures and get a lower grade, which grade counts in CGPA?",
+      "Can a student retake a course with a C grade to improve their GPA?",
+      "How much fine do I have to pay if I submit my semester fees 5 days late?",
+      "What is the maximum late fee fine that can be charged for delayed fee submission?",
+      "If I drop out in the first week of classes, do I get full tuition refund?",
+      "What percentage of fee is returned if I cancel admission in the second week?",
+      "Is there any refund granted if a student leaves university in week 3?",
+      "How much security deposit must be deposited during undergraduate admission?",
+      "Is the admission security deposit refundable when graduating?",
+      "Under the 2023 policy, how many warning semesters were tolerated before being dropped?",
+      "When did the 2026 academic handbook officially replace the 2023 regulations?",
+      "How many library books can an undergraduate student check out at one time?",
+      "What is the borrowing time period for books taken from the university library?",
+      "What is the daily overdue fine for late library book return?",
+      "How many students per department receive merit scholarships based on semester SGPA?",
+      "What is the warning CGPA threshold in the 2027 academic rules?",
+      "What grade is given if a student misses the final examination without permission?",
+      "Can tuition fees be refunded after classes have been ongoing for a month?"
+    ],
+    "Health Center & Emergency Medical Care": [
+      "Can the HoD forgive short attendance if I submit a hospital medical certificate?",
+      "Does student medical health insurance cover hospital emergency hospitalization?",
+      "Does the student health clinic offer dental checkups and routine prescription drugs?"
+    ],
+    "Fee Installments & Emergency Aid": [
+      "Who is eligible for merit financial aid in the engineering department?",
+      "How can a student get an emergency installment voucher for paying their semester fees?"
+    ],
+    "Campus Shuttle & Transport": [
+      "What are the timings and pickup stops for the Rawalpindi to Islamabad campus shuttle bus?",
+      "How much is the semester bus transport fee for day scholar students?"
+    ],
+    "Hostel & Residential Accommodation": [
+      "How do female students apply for on-campus hostel room allocation and mess facilities?",
+      "What is the monthly meal charge in the boys hostel dormitory?"
+    ],
+    "Sports Complex & Ground Bookings": [
+      "How do I book the campus cricket ground for an evening tournament with floodlights?"
+    ],
+    "Student Gymnasium & Fitness Center": [
+      "What are the membership fees and opening hours for the university student gymnasium?"
+    ],
+    "Cafeteria & Dining Services": [
+      "What is the weekly lunch menu and meal coupon price at the executive campus cafeteria?"
+    ],
+    "Campus Security & Parking Facilities": [
+      "What are the procedures to apply for a vehicle parking sticker on campus?"
+    ],
+    "Intellectual Property & Thesis Copyright": [
+      "Who holds the intellectual property copyright for final year project software code?"
+    ]
+  },
+  "per_query": [
+    {
+      "id": "lq01",
+      "query": "How many absences are allowed before getting an FA in a course?",
+      "domain": "in_domain",
+      "best_match_id": "q14",
+      "best_match_question": "Is any tuition refunded if a course is dropped after day 20 of classes?",
+      "similarity": 0.2175,
+      "covered": false
+    },
+    {
+      "id": "lq02",
+      "query": "What happens if my attendance drops to 78% in Object Oriented Programming?",
+      "domain": "in_domain",
+      "best_match_id": "q24",
+      "best_match_question": "Explain how the repetition of a course affects a student's GPA calculation if their new score happens to be lower than their initial attempt.",
+      "similarity": 0.2437,
+      "covered": false
+    },
+    {
+      "id": "lq03",
+      "query": "Can the HoD forgive short attendance if I submit a hospital medical certificate?",
+      "domain": "in_domain",
+      "best_match_id": "q21",
+      "best_match_question": "How can a student apply for an emergency installment plan for paying university tuition fees?",
+      "similarity": 0.2375,
+      "covered": false
+    },
+    {
+      "id": "lq04",
+      "query": "What is the minimum CGPA to stay out of academic warning?",
+      "domain": "in_domain",
+      "best_match_id": "q03",
+      "best_match_question": "What CGPA threshold places an undergraduate student on academic warning at the end of a regular semester?",
+      "similarity": 0.3794,
+      "covered": false
+    },
+    {
+      "id": "lq05",
+      "query": "If I am on probation for two semesters in a row, am I dismissed from university?",
+      "domain": "in_domain",
+      "best_match_id": "q04",
+      "best_match_question": "How many consecutive semesters on academic warning leads to a student being dropped from the programme?",
+      "similarity": 0.2449,
+      "covered": false
+    },
+    {
+      "id": "lq06",
+      "query": "How many consecutive warning semesters result in expulsion from the degree?",
+      "domain": "in_domain",
+      "best_match_id": "q04",
+      "best_match_question": "How many consecutive semesters on academic warning leads to a student being dropped from the programme?",
+      "similarity": 0.5364,
+      "covered": false
+    },
+    {
+      "id": "lq07",
+      "query": "If I repeat Data Structures and get a lower grade, which grade counts in CGPA?",
+      "domain": "in_domain",
+      "best_match_id": "q05",
+      "best_match_question": "When a student repeats a course to improve their CGPA, which attempt grade counts?",
+      "similarity": 0.3981,
+      "covered": false
+    },
+    {
+      "id": "lq08",
+      "query": "Can a student retake a course with a C grade to improve their GPA?",
+      "domain": "in_domain",
+      "best_match_id": "q05",
+      "best_match_question": "When a student repeats a course to improve their CGPA, which attempt grade counts?",
+      "similarity": 0.5736,
+      "covered": false
+    },
+    {
+      "id": "lq09",
+      "query": "How much fine do I have to pay if I submit my semester fees 5 days late?",
+      "domain": "in_domain",
+      "best_match_id": "q11",
+      "best_match_question": "How much tuition is refunded if a course is dropped within the first 10 days of classes?",
+      "similarity": 0.2405,
+      "covered": false
+    },
+    {
+      "id": "lq10",
+      "query": "What is the maximum late fee fine that can be charged for delayed fee submission?",
+      "domain": "in_domain",
+      "best_match_id": "q08",
+      "best_match_question": "What is the late registration charge in the Fall 2026 fee schedule?",
+      "similarity": 0.3832,
+      "covered": false
+    },
+    {
+      "id": "lq11",
+      "query": "If I drop out in the first week of classes, do I get full tuition refund?",
+      "domain": "in_domain",
+      "best_match_id": "q11",
+      "best_match_question": "How much tuition is refunded if a course is dropped within the first 10 days of classes?",
+      "similarity": 0.392,
+      "covered": false
+    },
+    {
+      "id": "lq12",
+      "query": "What percentage of fee is returned if I cancel admission in the second week?",
+      "domain": "in_domain",
+      "best_match_id": "q12",
+      "best_match_question": "What percentage of tuition is refunded if a course is dropped between day 11 and day 20?",
+      "similarity": 0.2299,
+      "covered": false
+    },
+    {
+      "id": "lq13",
+      "query": "Is there any refund granted if a student leaves university in week 3?",
+      "domain": "in_domain",
+      "best_match_id": "q14",
+      "best_match_question": "Is any tuition refunded if a course is dropped after day 20 of classes?",
+      "similarity": 0.2509,
+      "covered": false
+    },
+    {
+      "id": "lq14",
+      "query": "What is the tuition fee per credit hour for BS computer science students in 2026?",
+      "domain": "in_domain",
+      "best_match_id": "q09",
+      "best_match_question": "What is the tuition fee per credit hour for BS programmes in Fall 2026?",
+      "similarity": 0.7582,
+      "covered": true
+    },
+    {
+      "id": "lq15",
+      "query": "How much security deposit must be deposited during undergraduate admission?",
+      "domain": "in_domain",
+      "best_match_id": "q26",
+      "best_match_question": "What is the borrowing duration for undergraduate students according to the Library Lending Regulations?",
+      "similarity": 0.2215,
+      "covered": false
+    },
+    {
+      "id": "lq16",
+      "query": "Is the admission security deposit refundable when graduating?",
+      "domain": "in_domain",
+      "best_match_id": "q26",
+      "best_match_question": "What is the borrowing duration for undergraduate students according to the Library Lending Regulations?",
+      "similarity": 0.1925,
+      "covered": false
+    },
+    {
+      "id": "lq17",
+      "query": "What was the minimum attendance requirement in the older 2023 academic rules?",
+      "domain": "in_domain",
+      "best_match_id": "q06",
+      "best_match_question": "What was the minimum attendance percentage requirement according to the 2023 academic rules edition?",
+      "similarity": 0.7852,
+      "covered": true
+    },
+    {
+      "id": "lq18",
+      "query": "Under the 2023 policy, how many warning semesters were tolerated before being dropped?",
+      "domain": "in_domain",
+      "best_match_id": "q07",
+      "best_match_question": "Under the 2023 rules edition, how many consecutive semesters on warning caused a student to be dropped?",
+      "similarity": 0.5934,
+      "covered": false
+    },
+    {
+      "id": "lq19",
+      "query": "When did the 2026 academic handbook officially replace the 2023 regulations?",
+      "domain": "in_domain",
+      "best_match_id": "q16",
+      "best_match_question": "From which semester does the Academic Rules 2026 edition replace the 2023 edition?",
+      "similarity": 0.4111,
+      "covered": false
+    },
+    {
+      "id": "lq20",
+      "query": "How many library books can an undergraduate student check out at one time?",
+      "domain": "in_domain",
+      "best_match_id": "q21",
+      "best_match_question": "How can a student apply for an emergency installment plan for paying university tuition fees?",
+      "similarity": 0.3025,
+      "covered": false
+    },
+    {
+      "id": "lq21",
+      "query": "What is the borrowing time period for books taken from the university library?",
+      "domain": "in_domain",
+      "best_match_id": "q26",
+      "best_match_question": "What is the borrowing duration for undergraduate students according to the Library Lending Regulations?",
+      "similarity": 0.2993,
+      "covered": false
+    },
+    {
+      "id": "lq22",
+      "query": "What is the daily overdue fine for late library book return?",
+      "domain": "in_domain",
+      "best_match_id": "q26",
+      "best_match_question": "What is the borrowing duration for undergraduate students according to the Library Lending Regulations?",
+      "similarity": 0.1728,
+      "covered": false
+    },
+    {
+      "id": "lq23",
+      "query": "How many students per department receive merit scholarships based on semester SGPA?",
+      "domain": "in_domain",
+      "best_match_id": "q28",
+      "best_match_question": "According to the Fee Regulations in Batch B, how many departmental students are granted merit scholarships based on preceding SGPA?",
+      "similarity": 0.56,
+      "covered": false
+    },
+    {
+      "id": "lq24",
+      "query": "Under 2027 regulations in Batch B, what attendance percentage is needed for exams?",
+      "domain": "in_domain",
+      "best_match_id": "q27",
+      "best_match_question": "Under the 2027 academic regulations in Batch B, what attendance percentage is mandated to be eligible for final exams?",
+      "similarity": 0.7656,
+      "covered": true
+    },
+    {
+      "id": "lq25",
+      "query": "What is the warning CGPA threshold in the 2027 academic rules?",
+      "domain": "in_domain",
+      "best_match_id": "q03",
+      "best_match_question": "What CGPA threshold places an undergraduate student on academic warning at the end of a regular semester?",
+      "similarity": 0.5372,
+      "covered": false
+    },
+    {
+      "id": "lq26",
+      "query": "What grade is given if a student misses the final examination without permission?",
+      "domain": "in_domain",
+      "best_match_id": "q02",
+      "best_match_question": "What grade does a student receive if their attendance falls below the minimum required threshold?",
+      "similarity": 0.314,
+      "covered": false
+    },
+    {
+      "id": "lq27",
+      "query": "Can tuition fees be refunded after classes have been ongoing for a month?",
+      "domain": "in_domain",
+      "best_match_id": "q14",
+      "best_match_question": "Is any tuition refunded if a course is dropped after day 20 of classes?",
+      "similarity": 0.419,
+      "covered": false
+    },
+    {
+      "id": "lq28",
+      "query": "Who is eligible for merit financial aid in the engineering department?",
+      "domain": "in_domain",
+      "best_match_id": "q28",
+      "best_match_question": "According to the Fee Regulations in Batch B, how many departmental students are granted merit scholarships based on preceding SGPA?",
+      "similarity": 0.1953,
+      "covered": false
+    },
+    {
+      "id": "lq29",
+      "query": "What are the timings and pickup stops for the Rawalpindi to Islamabad campus shuttle bus?",
+      "domain": "out_of_domain",
+      "best_match_id": "q18",
+      "best_match_question": "What are the bus route schedules, pickup stops, and transport fee charges for the commuter shuttle service?",
+      "similarity": 0.4288,
+      "covered": false
+    },
+    {
+      "id": "lq30",
+      "query": "How much is the semester bus transport fee for day scholar students?",
+      "domain": "out_of_domain",
+      "best_match_id": "q18",
+      "best_match_question": "What are the bus route schedules, pickup stops, and transport fee charges for the commuter shuttle service?",
+      "similarity": 0.3861,
+      "covered": false
+    },
+    {
+      "id": "lq31",
+      "query": "How do female students apply for on-campus hostel room allocation and mess facilities?",
+      "domain": "out_of_domain",
+      "best_match_id": "q17",
+      "best_match_question": "What are the eligibility criteria and room allocation procedures for university on-campus student hostels?",
+      "similarity": 0.4263,
+      "covered": false
+    },
+    {
+      "id": "lq32",
+      "query": "What is the monthly meal charge in the boys hostel dormitory?",
+      "domain": "out_of_domain",
+      "best_match_id": "q08",
+      "best_match_question": "What is the late registration charge in the Fall 2026 fee schedule?",
+      "similarity": 0.1474,
+      "covered": false
+    },
+    {
+      "id": "lq33",
+      "query": "How do I book the campus cricket ground for an evening tournament with floodlights?",
+      "domain": "out_of_domain",
+      "best_match_id": "q20",
+      "best_match_question": "What are the booking guidelines, hourly rates, and floodlight charges for the cricket sports complex?",
+      "similarity": 0.2716,
+      "covered": false
+    },
+    {
+      "id": "lq34",
+      "query": "What are the membership fees and opening hours for the university student gymnasium?",
+      "domain": "out_of_domain",
+      "best_match_id": "q21",
+      "best_match_question": "How can a student apply for an emergency installment plan for paying university tuition fees?",
+      "similarity": 0.3969,
+      "covered": false
+    },
+    {
+      "id": "lq35",
+      "query": "What is the weekly lunch menu and meal coupon price at the executive campus cafeteria?",
+      "domain": "out_of_domain",
+      "best_match_id": "q07",
+      "best_match_question": "Under the 2023 rules edition, how many consecutive semesters on warning caused a student to be dropped?",
+      "similarity": 0.161,
+      "covered": false
+    },
+    {
+      "id": "lq36",
+      "query": "Does student medical health insurance cover hospital emergency hospitalization?",
+      "domain": "out_of_domain",
+      "best_match_id": "q19",
+      "best_match_question": "Does the student health clinic cover dental surgery expenses and hospital emergency admissions?",
+      "similarity": 0.6113,
+      "covered": false
+    },
+    {
+      "id": "lq37",
+      "query": "How can a student get an emergency installment voucher for paying their semester fees?",
+      "domain": "out_of_domain",
+      "best_match_id": "q21",
+      "best_match_question": "How can a student apply for an emergency installment plan for paying university tuition fees?",
+      "similarity": 0.6555,
+      "covered": false
+    },
+    {
+      "id": "lq38",
+      "query": "What are the procedures to apply for a vehicle parking sticker on campus?",
+      "domain": "out_of_domain",
+      "best_match_id": "q17",
+      "best_match_question": "What are the eligibility criteria and room allocation procedures for university on-campus student hostels?",
+      "similarity": 0.2836,
+      "covered": false
+    },
+    {
+      "id": "lq39",
+      "query": "Who holds the intellectual property copyright for final year project software code?",
+      "domain": "out_of_domain",
+      "best_match_id": "q22",
+      "best_match_question": "What are the copyright ownership policies regarding undergraduate capstone project source code and patents?",
+      "similarity": 0.3938,
+      "covered": false
+    },
+    {
+      "id": "lq40",
+      "query": "Does the student health clinic offer dental checkups and routine prescription drugs?",
+      "domain": "out_of_domain",
+      "best_match_id": "q19",
+      "best_match_question": "Does the student health clinic cover dental surgery expenses and hospital emergency admissions?",
+      "similarity": 0.4605,
+      "covered": false
+    }
+  ]
+}

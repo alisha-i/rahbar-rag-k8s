@@ -95,7 +95,12 @@ jobs:
             rahbar-api=${DH_USER}/rahbar-api:${{ github.sha }} \
             rahbar-indexer=${DH_USER}/rahbar-indexer:${{ github.sha }} \
             rahbar-ui=${DH_USER}/rahbar-ui:${{ github.sha }}
-          kubectl kustomize . | grep "image:"
+          # The kind cluster on a GitHub runner has no Ollama. The smoke test checks the released
+          # images and manifests, so it runs the real indexer -> Chroma -> API path with the CI
+          # hash embedder (identical in indexer and API) and the stub LLM, as in k8s/overlays/ci.
+          kustomize edit add patch --kind ConfigMap --name rahbar-config --patch \
+            '[{"op":"replace","path":"/data/LLM_PROVIDER","value":"stub"},{"op":"replace","path":"/data/EMBED_MODEL","value":"hash-ci-768"},{"op":"replace","path":"/data/RELEVANCE_FLOOR","value":"0.25"}]'
+          kubectl kustomize . | grep -E "image:|EMBED_MODEL|LLM_PROVIDER"
       - name: Apply prod manifests
         run: kubectl apply -k k8s/overlays/prod/
       - name: Wait for data tier rollout (Chroma and Redis)
