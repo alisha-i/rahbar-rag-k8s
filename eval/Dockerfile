@@ -12,10 +12,14 @@ RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/* && \
 RUN groupadd -g 10001 rahbar && useradd -u 10001 -g rahbar -m rahbar
 RUN pip install --no-cache-dir httpx==0.28.1 pyyaml==6.0.2
 
-# CVE-2025-47273: make sure no setuptools older than 78.1.1 is left anywhere in the image
+# CVE-2025-47273: make sure no setuptools older than 78.1.1 is left anywhere in the image.
+# pip is not needed at runtime, and its bundled SBOM (pip/_vendor/bom.cdx.json) lists the
+# setuptools 70.3.0 code pip vendors, which Trivy reports, so pip is removed at the end.
 RUN pip install --no-cache-dir --upgrade "setuptools>=78.1.1" && \
     find / -xdev -regextype posix-extended -regex '.*/setuptools-([0-6][0-9]|7[0-7])\.[^/]*' -prune -exec rm -rf {} + && \
-    pip show setuptools | grep Version
+    pip show setuptools | grep Version && \
+    python -m pip uninstall -y pip && \
+    rm -rf /usr/local/lib/python3.12/ensurepip
 
 COPY eval/ ./eval/
 COPY indexer/pipeline/ ./indexer/pipeline/
