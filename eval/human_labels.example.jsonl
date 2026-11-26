@@ -1,0 +1,2 @@
+{"id": "q01", "faithful": true, "note": "example format only: copy to eval/human_labels.jsonl and fill in YOUR judgement for >= 8 answers"}
+{"id": "q02", "faithful": false, "note": "example: the answer states a number that is not in the retrieved context"}

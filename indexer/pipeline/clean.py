@@ -13,8 +13,8 @@ def _detect_repeating_lines(pages: list[Page], threshold_ratio: float = 0.6) -> 
     if len(pages) < 3:
         return set()
 
-    top_lines = Counter()
-    bottom_lines = Counter()
+    top_lines: Counter[str] = Counter()
+    bottom_lines: Counter[str] = Counter()
 
     for p in pages:
         lines = [ln.strip() for ln in p.text.splitlines() if ln.strip()]

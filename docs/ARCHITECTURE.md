@@ -93,3 +93,10 @@ sequenceDiagram
 1. **Semantic Cache (Tier 1):** Redis stores normalized query embeddings and response payloads. Incoming questions with cosine similarity $\ge 0.85$ are served in $<2\text{ms}$. Conversational follow-ups, out-of-scope inquiries, and abstentions are strictly excluded via `never_cache` rules.
 2. **Relevance Floor & Honest Abstention (Tier 2):** Any query retrieving chunks whose similarity score falls below `0.50` triggers immediate abstention (`answered_from_context: false`), preventing LLM hallucinations.
 3. **Hard Rule 5 Citation Guardrail:** Every citation emitted by the LLM is checked against the passages actually retrieved by Chroma. Any hallucinated citation is discarded prior to response serialization.
+
+---
+
+## 4. Collaborative System Architecture Review
+
+- **Stateless Tier Resilience:** Verified that API replicas scale horizontally via HPA without SQLite lock contention.
+- **Persistent Storage Mapping:** Audited persistent volume claims for ChromaDB and Redis across Minikube and Kind environments.

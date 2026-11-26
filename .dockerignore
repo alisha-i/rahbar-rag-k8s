@@ -1,0 +1,16 @@
+# Root build context (indexer and eval images build from the repository root)
+.git
+**/__pycache__
+**/*.pyc
+.venv
+venv
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+corpus/raw
+corpus/quarantine
+corpus/archive
+traces
+eval/results
+docs
+*.pdf

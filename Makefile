@@ -13,7 +13,7 @@ INGRESS_IP ?= $(shell minikube ip 2>/dev/null)
 HOST ?= rahbar.local
 
 .DEFAULT_GOAL := help
-.PHONY: help install test lint dev cluster images apply secret index ask fetch eval eval-fixtures check
+.PHONY: help install test lint dev cluster images apply secret index ask fetch eval eval-fixtures check a3-index a3-batch-b a3-eval a3-eval-local a3-coverage a3-collect port-forward
 
 help: ## list the targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-14s %s\n", $$1, $$2}'
@@ -26,6 +26,39 @@ install: ## create .venv and install the api, indexer and tool dependencies
 test: ## run the api and indexer tests (stubs only: no cluster, no model, no network)
 	cd api && $(BIN)/pytest -q
 	cd indexer && $(BIN)/pytest -q
+
+# ---- Assignment 03 (RAGOps). Full walkthrough: README "Assignment 03" and k8s/README.md ----
+a3-index: ## A: ingest + verify the corpus as a Job (run twice: second run embeds 0 chunks)
+	kubectl delete job indexer -n $(NS) --ignore-not-found
+	kubectl apply -f k8s/base/indexer-job.yaml
+	kubectl wait --for=condition=complete job/indexer -n $(NS) --timeout=600s; kubectl logs job/indexer -n $(NS) -c indexer
+
+a3-batch-b: ## A/E3: ingest Batch B together with the corpus (verification report per document)
+	kubectl delete job indexer-batch-b -n $(NS) --ignore-not-found
+	kubectl apply -f k8s/indexer-batch-b-job.yaml
+	kubectl wait --for=condition=complete job/indexer-batch-b -n $(NS) --timeout=600s; kubectl logs job/indexer-batch-b -n $(NS) -c indexer
+
+a3-eval: ## B: three-level suite + gate against the live api, as a Job (LABEL=baseline)
+	kubectl delete job rahbar-eval-job -n $(NS) --ignore-not-found
+	sed 's/"baseline",/"$(or $(LABEL),baseline)",/' k8s/eval-job.yaml | kubectl apply -f -
+	-kubectl wait --for=condition=complete job/rahbar-eval-job -n $(NS) --timeout=900s
+	kubectl logs job/rahbar-eval-job -n $(NS)
+
+a3-eval-local: ## B: same suite from your laptop through a port-forward (make port-forward first)
+	$(BIN)/python eval/run_eval_v2.py --api http://localhost:8000 --label $(or $(LABEL),baseline)
+
+a3-coverage: ## E: coverage before and after the new golden questions
+	-OLLAMA_URL=http://localhost:11434 $(BIN)/python eval/coverage.py --golden eval/golden.jsonl
+	OLLAMA_URL=http://localhost:11434 $(BIN)/python eval/coverage.py --golden eval/golden_extended.jsonl
+
+a3-collect: ## copy results and traces from the PVC into eval/results and traces/ (to commit)
+	kubectl apply -f k8s/toolbox-pod.yaml
+	kubectl wait --for=condition=Ready pod/toolbox -n $(NS) --timeout=120s
+	kubectl cp $(NS)/toolbox:/data/results ./eval/results
+	kubectl cp $(NS)/toolbox:/data/traces ./traces
+
+port-forward: ## api on localhost:8000 (metrics at /metrics)
+	kubectl port-forward svc/api 8000:8000 -n $(NS)
 
 lint: ## ruff and mypy over everything in Python
 	$(BIN)/ruff check api indexer eval corpus
@@ -42,10 +75,12 @@ cluster: ## start minikube with Calico, then enable metrics-server and ingress
 
 images: ## build the three images and load them into minikube (needs yours: Dockerfiles)
 	docker build -t rahbar-api:$(TAG) api
-	docker build -t rahbar-indexer:$(TAG) indexer
+	docker build -t rahbar-indexer:$(TAG) -f indexer/Dockerfile .
+	docker build -t rahbar-eval:$(TAG) -f eval/Dockerfile .
 	docker build -t rahbar-ui:$(TAG) ui
 	minikube image load rahbar-api:$(TAG)
 	minikube image load rahbar-indexer:$(TAG)
+	minikube image load rahbar-eval:$(TAG)
 	minikube image load rahbar-ui:$(TAG)
 
 apply: ## apply the dev overlay (needs yours: manifests)

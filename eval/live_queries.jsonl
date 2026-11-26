@@ -1,0 +1,40 @@
+{"id": "lq01", "query": "How many absences are allowed before getting an FA in a course?", "domain": "in_domain"}
+{"id": "lq02", "query": "What happens if my attendance drops to 78% in Object Oriented Programming?", "domain": "in_domain"}
+{"id": "lq03", "query": "Can the HoD forgive short attendance if I submit a hospital medical certificate?", "domain": "in_domain"}
+{"id": "lq04", "query": "What is the minimum CGPA to stay out of academic warning?", "domain": "in_domain"}
+{"id": "lq05", "query": "If I am on probation for two semesters in a row, am I dismissed from university?", "domain": "in_domain"}
+{"id": "lq06", "query": "How many consecutive warning semesters result in expulsion from the degree?", "domain": "in_domain"}
+{"id": "lq07", "query": "If I repeat Data Structures and get a lower grade, which grade counts in CGPA?", "domain": "in_domain"}
+{"id": "lq08", "query": "Can a student retake a course with a C grade to improve their GPA?", "domain": "in_domain"}
+{"id": "lq09", "query": "How much fine do I have to pay if I submit my semester fees 5 days late?", "domain": "in_domain"}
+{"id": "lq10", "query": "What is the maximum late fee fine that can be charged for delayed fee submission?", "domain": "in_domain"}
+{"id": "lq11", "query": "If I drop out in the first week of classes, do I get full tuition refund?", "domain": "in_domain"}
+{"id": "lq12", "query": "What percentage of fee is returned if I cancel admission in the second week?", "domain": "in_domain"}
+{"id": "lq13", "query": "Is there any refund granted if a student leaves university in week 3?", "domain": "in_domain"}
+{"id": "lq14", "query": "What is the tuition fee per credit hour for BS computer science students in 2026?", "domain": "in_domain"}
+{"id": "lq15", "query": "How much security deposit must be deposited during undergraduate admission?", "domain": "in_domain"}
+{"id": "lq16", "query": "Is the admission security deposit refundable when graduating?", "domain": "in_domain"}
+{"id": "lq17", "query": "What was the minimum attendance requirement in the older 2023 academic rules?", "domain": "in_domain"}
+{"id": "lq18", "query": "Under the 2023 policy, how many warning semesters were tolerated before being dropped?", "domain": "in_domain"}
+{"id": "lq19", "query": "When did the 2026 academic handbook officially replace the 2023 regulations?", "domain": "in_domain"}
+{"id": "lq20", "query": "How many library books can an undergraduate student check out at one time?", "domain": "in_domain"}
+{"id": "lq21", "query": "What is the borrowing time period for books taken from the university library?", "domain": "in_domain"}
+{"id": "lq22", "query": "What is the daily overdue fine for late library book return?", "domain": "in_domain"}
+{"id": "lq23", "query": "How many students per department receive merit scholarships based on semester SGPA?", "domain": "in_domain"}
+{"id": "lq24", "query": "Under 2027 regulations in Batch B, what attendance percentage is needed for exams?", "domain": "in_domain"}
+{"id": "lq25", "query": "What is the warning CGPA threshold in the 2027 academic rules?", "domain": "in_domain"}
+{"id": "lq26", "query": "What grade is given if a student misses the final examination without permission?", "domain": "in_domain"}
+{"id": "lq27", "query": "Can tuition fees be refunded after classes have been ongoing for a month?", "domain": "in_domain"}
+{"id": "lq28", "query": "Who is eligible for merit financial aid in the engineering department?", "domain": "in_domain"}
+{"id": "lq29", "query": "What are the timings and pickup stops for the Rawalpindi to Islamabad campus shuttle bus?", "domain": "out_of_domain"}
+{"id": "lq30", "query": "How much is the semester bus transport fee for day scholar students?", "domain": "out_of_domain"}
+{"id": "lq31", "query": "How do female students apply for on-campus hostel room allocation and mess facilities?", "domain": "out_of_domain"}
+{"id": "lq32", "query": "What is the monthly meal charge in the boys hostel dormitory?", "domain": "out_of_domain"}
+{"id": "lq33", "query": "How do I book the campus cricket ground for an evening tournament with floodlights?", "domain": "out_of_domain"}
+{"id": "lq34", "query": "What are the membership fees and opening hours for the university student gymnasium?", "domain": "out_of_domain"}
+{"id": "lq35", "query": "What is the weekly lunch menu and meal coupon price at the executive campus cafeteria?", "domain": "out_of_domain"}
+{"id": "lq36", "query": "Does student medical health insurance cover hospital emergency hospitalization?", "domain": "out_of_domain"}
+{"id": "lq37", "query": "How can a student get an emergency installment voucher for paying their semester fees?", "domain": "out_of_domain"}
+{"id": "lq38", "query": "What are the procedures to apply for a vehicle parking sticker on campus?", "domain": "out_of_domain"}
+{"id": "lq39", "query": "Who holds the intellectual property copyright for final year project software code?", "domain": "out_of_domain"}
+{"id": "lq40", "query": "Does the student health clinic offer dental checkups and routine prescription drugs?", "domain": "out_of_domain"}

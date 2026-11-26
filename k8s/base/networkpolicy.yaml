@@ -1,3 +1,6 @@
+# Deny by default, then allow only the paths the architecture needs (A2 4.7).
+# Pods are selected by app.kubernetes.io/name, except the two API Deployments (live and
+# candidate), which share the label rahbar/role: api-server.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -29,6 +32,8 @@ spec:
         - protocol: TCP
           port: 53
 ---
+# ui: serves static files on 8080 (to the ingress controller and kubelet probes) and calls
+# nothing itself (the browser calls /api through the Ingress), so it has no egress.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -40,20 +45,13 @@ spec:
       app.kubernetes.io/name: ui
   policyTypes:
     - Ingress
-    - Egress
   ingress:
     - ports:
         - protocol: TCP
           port: 8080
-  egress:
-    - to:
-        - podSelector:
-            matchLabels:
-              app.kubernetes.io/name: api
-      ports:
-        - protocol: TCP
-          port: 8000
 ---
+# api (live and candidate): from the ingress controller, the ui, the eval Job and
+# `kubectl port-forward` (which arrives from the node); out to chroma, redis and the LLM.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -62,19 +60,24 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      app.kubernetes.io/name: api
+      rahbar/role: api-server
   policyTypes:
     - Ingress
     - Egress
   ingress:
     - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: ui
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: eval-job
+        - ipBlock:
+            cidr: 0.0.0.0/0   # node-originated traffic: kubelet probes and port-forward
       ports:
-        - protocol: TCP
-          port: 8000
-    - ports:
         - protocol: TCP
           port: 8000
   egress:
@@ -92,7 +95,7 @@ spec:
       ports:
         - protocol: TCP
           port: 6379
-    # Egress to host Ollama or hosted LLM provider
+    # Ollama on the laptop (host.minikube.internal) or a hosted provider
     - to:
         - ipBlock:
             cidr: 0.0.0.0/0
@@ -102,6 +105,7 @@ spec:
         - protocol: TCP
           port: 443
 ---
+# chroma: read by the APIs, written by the indexer Jobs only. Nothing else, ui included.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -117,7 +121,7 @@ spec:
     - from:
         - podSelector:
             matchLabels:
-              app.kubernetes.io/name: api
+              rahbar/role: api-server
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: indexer
@@ -125,6 +129,8 @@ spec:
         - protocol: TCP
           port: 8000
 ---
+# redis: the APIs use the cache; the indexer Job only connects to expire it after a re-index
+# (A2 3.3 "invalidate on re-index").
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -140,11 +146,15 @@ spec:
     - from:
         - podSelector:
             matchLabels:
-              app.kubernetes.io/name: api
+              rahbar/role: api-server
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: indexer
       ports:
         - protocol: TCP
           port: 6379
 ---
+# indexer Job / CronJob / candidate and Batch-B indexer Jobs (all labelled indexer)
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -165,10 +175,43 @@ spec:
         - protocol: TCP
           port: 8000
     - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: redis
+      ports:
+        - protocol: TCP
+          port: 6379
+    - to:
         - ipBlock:
             cidr: 0.0.0.0/0
       ports:
         - protocol: TCP
           port: 11434
+---
+# eval Job: calls the live or candidate API, and Ollama directly for the module-level
+# embedding test and the faithfulness judge.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-eval
+  namespace: rahbar
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: eval-job
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              rahbar/role: api-server
+      ports:
         - protocol: TCP
-          port: 443
+          port: 8000
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - protocol: TCP
+          port: 11434

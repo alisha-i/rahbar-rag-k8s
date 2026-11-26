@@ -84,3 +84,14 @@ def test_citation_validity_filters_fabricated_citations() -> None:
     assert len(valid) == 1
     assert valid[0].source == "rules.pdf"
     assert valid[0].section == "1.2 Attendance"
+
+
+def test_abstention_strictly_has_empty_citations_and_no_retrieved_refs() -> None:
+    settings = Settings(retriever="stub", llm_provider="stub", relevance_floor=0.70)
+    retriever = LowScoreRetriever()  # returns score 0.2 < 0.70 floor
+    provider = StubProvider()
+
+    resp = answer_question("What is the quantum physics syllabus?", retriever, provider, settings)
+    assert resp.answered_from_context is False
+    assert len(resp.citations) == 0
+    assert len(resp.retrieved) == 0

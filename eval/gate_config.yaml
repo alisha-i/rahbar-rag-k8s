@@ -1,0 +1,22 @@
+# Part C2 release-gate thresholds. On the cluster the same keys live in the
+# rahbar-gate-thresholds ConfigMap (k8s/base/gate-configmap.yaml), mounted into the eval Job
+# at /etc/gate/gate_config.yaml: edit the ConfigMap, re-run the Job, and the decision changes
+# without rebuilding any image (F2).
+#
+# Justification (update the numbers in the report from YOUR baseline run):
+gate_thresholds:
+  # A candidate may not lose more than 2 recall@5 points: with ~22 answerable golden questions
+  # one question is ~4.5 points, so any lost question fails the gate.
+  max_recall5_drop: 0.02
+  # Faithfulness from the LLM judge. Set ~0.05 below the baseline you measured, so judge noise
+  # (see judge/human agreement) does not block a release but a real regression does.
+  min_faithfulness: 0.85
+  # End-to-end p95 with llama3.2:3b on a laptop CPU through ollama-host is several seconds.
+  # Set to roughly 1.25 x your measured baseline p95 (copy the measured number into the report).
+  max_p95_latency_ms: 15000
+  # Every must-abstain question must abstain (A2 5.3 requires 100%), and a candidate may never
+  # abstain less correctly than the baseline.
+  min_abstention_correctness: 1.0
+  abstention_not_below_baseline: true
+  # A2 5.4: citation validity below 95% fails.
+  min_citation_validity: 0.95

@@ -1,0 +1,30 @@
+# F1: the data lake (documents, quarantine/, archive/, index state) lives on corpus-pvc, and
+# results + per-pod trace files on eval-results-pvc, so all of it survives pod restarts.
+# Both are ReadWriteOnce: fine on single-node minikube, where all pods share the node.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: corpus-pvc
+  namespace: rahbar
+  labels:
+    app.kubernetes.io/name: corpus-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: eval-results-pvc
+  namespace: rahbar
+  labels:
+    app.kubernetes.io/name: eval-results-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

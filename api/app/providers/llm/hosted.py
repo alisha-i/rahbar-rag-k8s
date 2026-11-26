@@ -9,7 +9,7 @@ import httpx
 
 from ...config import Settings
 from ...schemas import Answer, Passage
-from .ollama import _build_augmented_prompt, parse_answer_json
+from .ollama import FALLBACK_ANSWER, _build_augmented_prompt, parse_answer_json
 
 log = logging.getLogger("rahbar.provider.hosted")
 
@@ -22,10 +22,8 @@ class HostedProvider:
 
     def generate(self, question: str, passages: list[Passage]) -> Answer:
         if not self.settings.hosted_base_url or not self.settings.llm_api_key:
-            log.warning("Hosted provider invoked without HOSTED_BASE_URL or LLM_API_KEY; using safe grounded fallback")
-            from .stub import StubProvider
-
-            return StubProvider().generate(question, passages)
+            log.warning("Hosted provider invoked without HOSTED_BASE_URL or LLM_API_KEY; returning safe fallback")
+            return FALLBACK_ANSWER
 
         prompt = _build_augmented_prompt(question, passages)
         url = f"{self.settings.hosted_base_url.rstrip('/')}/chat/completions"
@@ -78,6 +76,4 @@ class HostedProvider:
                     })
 
         log.error("Hosted provider failed after retry; returning safe canned fallback")
-        from .stub import StubProvider
-
-        return StubProvider().generate(question, passages)
+        return FALLBACK_ANSWER

@@ -1,0 +1,47 @@
+# A small pod that mounts both PVCs, used to (1) copy unseen documents into the data lake for the
+# demo and (2) copy result files and traces OUT so they can be committed. It has no network access
+# (default-deny NetworkPolicy) and runs as non-root.
+#   kubectl apply -f k8s/toolbox-pod.yaml && kubectl wait --for=condition=Ready pod/toolbox -n rahbar
+#   kubectl cp ./new_docs/. rahbar/toolbox:/corpus/batch_b/          # new batch for the demo
+#   kubectl cp rahbar/toolbox:/data/results ./eval/results           # results -> repo
+#   kubectl cp rahbar/toolbox:/data/traces  ./traces                 # traces  -> repo
+#   kubectl exec -n rahbar toolbox -- ls -R /corpus                  # quarantine/ and archive/
+apiVersion: v1
+kind: Pod
+metadata:
+  name: toolbox
+  namespace: rahbar
+  labels:
+    app.kubernetes.io/name: toolbox
+spec:
+  automountServiceAccountToken: false
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 10001
+    runAsGroup: 10001
+    fsGroup: 10001
+  containers:
+    - name: toolbox
+      image: busybox:1.36
+      imagePullPolicy: IfNotPresent
+      command: ["sh", "-c", "sleep 86400"]
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop: ["ALL"]
+      resources:
+        requests: {cpu: 10m, memory: 16Mi}
+        limits: {cpu: 100m, memory: 64Mi}
+      volumeMounts:
+        - name: corpus
+          mountPath: /corpus
+        - name: data
+          mountPath: /data
+  volumes:
+    - name: corpus
+      persistentVolumeClaim:
+        claimName: corpus-pvc
+    - name: data
+      persistentVolumeClaim:
+        claimName: eval-results-pvc

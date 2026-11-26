@@ -16,6 +16,13 @@ class IndexerSettings:
     chunk_size: int
     chunk_overlap: int
     ollama_url: str
+    quarantine_dir: str = ""   # "" -> <corpus root>/quarantine (on the corpus PVC in the cluster)
+    archive_dir: str = ""      # "" -> <corpus root>/archive
+
+    @property
+    def index_version(self) -> str:
+        """Written into the collection metadata and echoed in every trace (A3 D1/F3)."""
+        return f"{self.embed_model}|chunk{self.chunk_size}-ov{self.chunk_overlap}"
 
 
 def get_settings() -> IndexerSettings:
@@ -28,4 +35,6 @@ def get_settings() -> IndexerSettings:
         chunk_size=int(os.environ.get("CHUNK_SIZE", 400)),
         chunk_overlap=int(os.environ.get("CHUNK_OVERLAP", 50)),
         ollama_url=os.environ.get("OLLAMA_URL", "http://host.minikube.internal:11434"),
+        quarantine_dir=os.environ.get("QUARANTINE_DIR", ""),
+        archive_dir=os.environ.get("ARCHIVE_DIR", ""),
     )

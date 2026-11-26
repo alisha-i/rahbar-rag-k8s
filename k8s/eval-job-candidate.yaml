@@ -1,0 +1,66 @@
+# F3: the same suite against the CANDIDATE Deployment/Service; the gate compares it with
+# /data/results/latest_baseline.json written by k8s/eval-job.yaml.
+#   kubectl apply -f k8s/eval-job-candidate.yaml && kubectl logs -f job/rahbar-eval-candidate -n rahbar
+# For the "stopped by the gate" run, label it failing_candidate:
+#   sed 's/"candidate"]/"failing_candidate"]/; s/rahbar-eval-candidate/rahbar-eval-failing/' k8s/eval-job-candidate.yaml | kubectl apply -f -
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: rahbar-eval-candidate
+  namespace: rahbar
+  labels:
+    app.kubernetes.io/name: eval-job
+    app.kubernetes.io/part-of: rahbar-ragops
+spec:
+  backoffLimit: 0   # no retry: a gate FAIL (exit 1) leaves the Job Failed, which is the signal (F2)
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: eval-job
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+      containers:
+        - name: evaluator
+          image: rahbar-eval:dev
+          imagePullPolicy: IfNotPresent
+          args: ["--api", "http://api-candidate.rahbar.svc.cluster.local:8000", "--label", "candidate",
+                 "--gate-config", "/etc/gate/gate_config.yaml", "--output-dir", "/data/results"]
+          envFrom:
+            - configMapRef:
+                name: rahbar-config
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          volumeMounts:
+            - name: gate-config-volume
+              mountPath: /etc/gate
+              readOnly: true
+            - name: data
+              mountPath: /data
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: gate-config-volume
+          configMap:
+            name: rahbar-gate-thresholds
+        - name: data
+          persistentVolumeClaim:
+            claimName: eval-results-pvc
+        - name: tmp
+          emptyDir: {}

@@ -82,8 +82,8 @@ def _extract_pdf(path: str) -> list[Page]:
         import pypdf
 
         reader = pypdf.PdfReader(path)
-        for idx, page in enumerate(reader.pages, start=1):
-            text = (page.extract_text() or "").strip()
+        for idx, pdf_page in enumerate(reader.pages, start=1):
+            text = (pdf_page.extract_text() or "").strip()
             if len(text) < 30:
                 ocr_text = _ocr_page(path, idx)
                 if ocr_text:
@@ -114,6 +114,13 @@ def extract(path: str, doc_version: str, superseded: bool) -> Document:
     else:
         # Markdown or plain text (.md, .txt)
         content = file_path.read_text(encoding="utf-8", errors="replace")
+        # Front matter (--- key: value ---) is metadata, not text: discover() already read it,
+        # and leaving it in put "source: ... doc_version: ..." lines into chunks and answers.
+        if content.lstrip().startswith("---"):
+            body = content.lstrip()[3:]
+            end = body.find("\n---")
+            if end != -1:
+                content = body[end + 4:].lstrip("\n")
         # Split on markdown thematic breaks or page indicators if present
         raw_pages = content.split("\n---page---\n")
         pages = [

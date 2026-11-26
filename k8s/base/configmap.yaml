@@ -4,14 +4,15 @@ metadata:
   name: rahbar-config
   namespace: rahbar
 data:
-  # Retrieval and LLM execution modes
-  RETRIEVER: "stub"
-  LLM_PROVIDER: "stub"
+  # The real pipeline. ("stub" is only for `make dev` and unit tests: never deploy it.)
+  RETRIEVER: "chroma"
+  LLM_PROVIDER: "ollama-host"
 
-  # Embedding pin: indexer writes this into collection metadata; API checks on readiness
-  EMBED_MODEL: "dummy-768"
+  # Embedding pin: the indexer writes it into the collection metadata; the API's readiness
+  # probe refuses to go ready if the collection was built with a different model (A2 4.4).
+  EMBED_MODEL: "nomic-embed-text"
 
-  # Vector store settings
+  # Vector store
   CHROMA_HOST: "chroma"
   CHROMA_PORT: "8000"
   CHROMA_COLLECTION: "rahbar"
@@ -20,23 +21,26 @@ data:
   TOP_K: "5"
   RELEVANCE_FLOOR: "0.5"
 
-  # Low temperature ensures deterministic, grounded generation from facts and valid JSON output.
+  # Facts and JSON belong at 0-0.3; 0.2 keeps JSON valid and answers stable without being greedy.
   TEMPERATURE: "0.2"
 
-  # Generation model and endpoints
+  # Generation model and endpoints (ollama-host: Ollama on the laptop, OLLAMA_HOST=0.0.0.0)
   LLM_MODEL: "llama3.2:3b"
   OLLAMA_URL: "http://host.minikube.internal:11434"
   HOSTED_BASE_URL: ""
 
-  # Semantic cache settings
+  # Semantic cache
   REDIS_HOST: "redis"
   REDIS_PORT: "6379"
   CACHE_THRESHOLD: "0.85"
 
-  # Corpus indexing parameters (tokens per chunk and overlap)
+  # Corpus / data lake on the corpus PVC (F1): documents, quarantine/, archive/, state files
   CORPUS_DIR: "/corpus"
   CHUNK_SIZE: "400"
   CHUNK_OVERLAP: "50"
 
-  # Logging
+  # Results and traces on the results PVC (F2, F4)
+  RESULTS_DIR: "/data/results"
+  TRACE_DIR: "/data/traces"
+
   LOG_LEVEL: "INFO"

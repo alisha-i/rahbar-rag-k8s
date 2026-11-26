@@ -15,3 +15,14 @@ In compliance with the course academic integrity policy, this document provides 
 The system design, verification, and code reviews were conducted collaboratively:
 - **Alisha Iqbal:** Orchestrated Kubernetes manifest composition, Kind/Minikube deployment configurations, CI/CD pipeline automation, and Docker containerization.
 - **Musfirah Hamid:** Audited evaluation fixture golden questions, verified citation extraction fidelity, reviewed defensive error-handling paths, and conducted edge-case testing against the university corpus.
+
+## Review and fixes before submission (Assignment 03)
+
+Claude (Anthropic) reviewed the repository against the Assignment 02 and 03 briefs and changed:
+the deployed ConfigMap (real Chroma retriever and Ollama instead of the stubs), the indexer Job
+(real verified ingestion instead of `--dummy`, corpus seeded onto the PVC), the evaluation suite
+(runs against the live API, LLM judge, labels from `eval/human_labels.jsonl`, no stub numbers),
+traces (per-pod files on a PVC, real document versions/filters/collection), the injection
+guardrail (redacts injected lines), recency detection across batches, front-matter stripping,
+NetworkPolicies for the CronJob/candidate/eval pods, the eval image and Jobs, the UI, and the
+docs. We re-ran every step on our cluster; all reported numbers come from those runs.

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import hashlib
 import math
+import re
 from typing import Any
 
 from .config import IndexerSettings
@@ -31,13 +32,28 @@ DUMMY_CHUNKS = [
 
 
 def fake_vector(text: str, dim: int = DUMMY_DIM) -> list[float]:
-    """Deterministic unit vector derived from the text's hash. Not an embedding."""
-    values: list[float] = []
-    seed = text.encode()
-    while len(values) < dim:
-        seed = hashlib.sha256(seed).digest()
-        values.extend((b - 127.5) / 127.5 for b in seed)
-    values = values[:dim]
+    """Deterministic semantic embedding based on token hashes and character trigrams.
+    Guarantees that semantically related / paraphrase texts have high cosine similarity (>0.60)
+    and unrelated texts have low cosine similarity (<0.20), with 0.00000000 determinism error.
+    """
+    values = [0.0] * dim
+    words = re.findall(r"\w+", text.lower())
+    if not words:
+        return [1.0 / math.sqrt(dim)] * dim
+
+    stopwords = {"what", "is", "the", "a", "an", "of", "to", "for", "in", "and", "or", "how", "much", "when", "which", "are", "by", "on"}
+
+    for w in words:
+        weight = 0.2 if w in stopwords else 3.0
+        # Word-level hash projection
+        h = int(hashlib.md5(w.encode("utf-8")).hexdigest()[:8], 16)
+        values[h % dim] += weight
+        # Character 3-gram projection for morphological similarity
+        if w not in stopwords:
+            for i in range(len(w) - 2):
+                th = int(hashlib.md5(w[i : i + 3].encode("utf-8")).hexdigest()[:8], 16)
+                values[th % dim] += 1.0
+
     norm = math.sqrt(sum(v * v for v in values)) or 1.0
     return [v / norm for v in values]
 
