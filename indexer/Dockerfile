@@ -7,7 +7,10 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
+# Trivy (CI) fails on fixable HIGH/CRITICAL: take the latest OS patches too.
 RUN apt-get update && \
+    apt-get upgrade -y && \
+    pip install --no-cache-dir --upgrade pip setuptools wheel && \
     apt-get install -y --no-install-recommends \
         tesseract-ocr \
         poppler-utils && \

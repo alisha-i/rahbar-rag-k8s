@@ -5,6 +5,10 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
+# Trivy (CI) fails on fixable HIGH/CRITICAL: take the latest OS and packaging-tool patches.
+RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/* && \
+    pip install --no-cache-dir --upgrade pip setuptools wheel
+
 RUN groupadd -g 10001 rahbar && \
     useradd -u 10001 -g rahbar -s /bin/bash -m rahbar
 
