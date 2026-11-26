@@ -1,0 +1,37 @@
+{
+  "paraphrase_pairs": [
+    ["What is the minimum attendance required for final exams?", "How many lectures must a student attend to be allowed to sit in exams?"],
+    ["What is the penalty for late fee deposit?", "How much fine is charged per day for delayed tuition payment?"],
+    ["When is an undergraduate placed on academic warning?", "What CGPA triggers academic warning status?"],
+    ["How many consecutive semesters on probation before dismissal?", "After how many probation semesters is a student expelled?"],
+    ["Which grade is recorded when repeating a course?", "If I retake a course to improve my GPA, does the new grade overwrite the old one?"],
+    ["What refund is given if I withdraw in the first week?", "How much tuition fee is returned if dropping out in week one?"],
+    ["Who can condone low attendance for medical reasons?", "Can the Head of Department excuse attendance shortage due to illness?"],
+    ["What attendance percentage was needed in 2023 edition?", "What was the minimum class attendance requirement under 2023 rules?"],
+    ["What is the tuition fee per credit hour?", "How much does one credit hour cost in tuition fees?"],
+    ["What is the maximum late fee surcharge duration?", "Up to how many days can late fee fines accumulate?"],
+    ["What happens if attendance is below eighty percent?", "Which failing grade is assigned for shortage of attendance?"],
+    ["What is the refundable security deposit amount?", "How much caution money is paid at admission time?"],
+    ["What refund do students receive after week two?", "Is tuition refunded if withdrawal occurs past the second week?"],
+    ["How long can undergraduate students borrow library books?", "What is the book loan period for bachelor students?"],
+    ["What CGPA threshold triggers warning under 2027 rules?", "Below what GPA is an undergraduate warned in 2027 regulations?"]
+  ],
+  "unrelated_pairs": [
+    ["What is the minimum attendance required for final exams?", "What is the fee per credit hour for engineering?"],
+    ["When is an undergraduate placed on academic warning?", "How many books can a graduate student borrow from the library?"],
+    ["What refund is given if I withdraw in the first week?", "Who has the authority to condone student absence?"],
+    ["How many consecutive semesters on probation before dismissal?", "What is the refundable security deposit amount?"],
+    ["Which grade is recorded when repeating a course?", "What are the lab safety regulations regarding eyewear?"],
+    ["What was the minimum attendance percentage in 2023?", "How much late fee surcharge is levied per day?"],
+    ["What is the penalty for late fee deposit?", "What CGPA triggers academic warning status in 2027?"],
+    ["What is the book loan period for bachelor students?", "What grade does a student receive for FA?"],
+    ["How many lectures must a student attend for exams?", "What percentage of fee is refunded in week two?"],
+    ["Can the Head of Department excuse attendance shortage?", "What is the cost per credit hour for graduate studies?"],
+    ["What happens if attendance is below eighty percent?", "How many merit scholarships are awarded per department?"],
+    ["Up to how many days can late fee fines accumulate?", "When does the 2026 academic handbook take effect?"],
+    ["How much caution money is paid at admission time?", "Which attempt counts when repeating a course?"],
+    ["Is tuition refunded if withdrawal occurs past week two?", "What are the rules regarding comprehensive examination?"],
+    ["What was the attendance requirement under 2023 rules?", "What are the opening hours of the university cafeteria?"]
+  ],
+  "determinism_text": "A student whose cumulative grade point average (CGPA) falls below 2.00 at the end of a regular semester is placed on academic warning. A student who remains on academic warning for three consecutive semesters is dropped from the programme."
+}
