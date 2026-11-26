@@ -12,6 +12,11 @@ RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/* && \
 RUN groupadd -g 10001 rahbar && useradd -u 10001 -g rahbar -m rahbar
 RUN pip install --no-cache-dir httpx==0.28.1 pyyaml==6.0.2
 
+# CVE-2025-47273: make sure no setuptools older than 78.1.1 is left anywhere in the image
+RUN pip install --no-cache-dir --upgrade "setuptools>=78.1.1" && \
+    find / -xdev -regextype posix-extended -regex '.*/setuptools-([0-6][0-9]|7[0-7])\.[^/]*' -prune -exec rm -rf {} + && \
+    pip show setuptools | grep Version
+
 COPY eval/ ./eval/
 COPY indexer/pipeline/ ./indexer/pipeline/
 

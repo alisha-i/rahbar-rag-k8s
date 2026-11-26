@@ -22,6 +22,11 @@ RUN groupadd -g 10001 rahbar && \
 COPY indexer/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# CVE-2025-47273: make sure no setuptools older than 78.1.1 is left anywhere in the image
+RUN pip install --no-cache-dir --upgrade "setuptools>=78.1.1" && \
+    find / -xdev -regextype posix-extended -regex '.*/setuptools-([0-6][0-9]|7[0-7])\.[^/]*' -prune -exec rm -rf {} + && \
+    pip show setuptools | grep Version
+
 COPY indexer/pipeline/ ./pipeline/
 # Seed documents. The corpus PVC is mounted at /corpus and hides anything baked there, so the
 # Job's init container copies /seed/corpus into the PVC on the first run only.
