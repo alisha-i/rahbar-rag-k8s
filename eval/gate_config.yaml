@@ -13,7 +13,8 @@ gate_thresholds:
   min_faithfulness: 0.85
   # End-to-end p95 with llama3.2:3b on a laptop CPU through ollama-host is several seconds.
   # Set to roughly 1.25 x your measured baseline p95 (copy the measured number into the report).
-  max_p95_latency_ms: 15000
+  # Measured baseline p95 = 54,111 ms (eval_baseline_2026-11-26T17-57-13Z) x 1.25 = 68,000 ms.
+  max_p95_latency_ms: 68000
   # Every must-abstain question must abstain (A2 5.3 requires 100%), and a candidate may never
   # abstain less correctly than the baseline.
   min_abstention_correctness: 1.0

@@ -214,6 +214,31 @@ def _lexical_support(answer: str, context: str) -> float:
     return sum(1 for w in words if w in ctx) / len(words)
 
 
+def _parse_verdict(content: str) -> bool | None:
+    """Small models do not always return exactly {"faithful": true}: accept "true"/"yes"/1,
+    any key that contains "faithful", or a bare yes/no."""
+    try:
+        data = json.loads(content)
+    except json.JSONDecodeError:
+        data = None
+    if isinstance(data, dict):
+        for k, v in data.items():
+            if "faithful" in str(k).lower() or str(k).lower() in {"supported", "verdict", "answer"}:
+                if isinstance(v, bool):
+                    return v
+                sv = str(v).strip().lower()
+                if sv in {"true", "yes", "1", "faithful", "supported"}:
+                    return True
+                if sv in {"false", "no", "0", "unfaithful", "not supported", "unsupported"}:
+                    return False
+    low = content.lower()
+    if re.search(r"\b(not faithful|unfaithful|unsupported|false|no)\b", low):
+        return False
+    if re.search(r"\b(faithful|supported|true|yes)\b", low):
+        return True
+    return None
+
+
 class Judge:
     """LLM-as-judge through Ollama (temperature 0, JSON mode). Falls back to a lexical support
     score if the judge model cannot be reached; the result file records which one was used."""
@@ -236,8 +261,11 @@ class Judge:
                     "messages": [{"role": "user", "content": JUDGE_PROMPT.format(context=context[:6000], answer=answer)}],
                 })
                 r.raise_for_status()
-                data = json.loads(r.json()["message"]["content"])
-                return (1.0 if data.get("faithful") is True else 0.0), str(data.get("reason", ""))[:200]
+                content = r.json()["message"]["content"]
+                verdict = _parse_verdict(content)
+                if verdict is None:
+                    return 0.0, f"unparseable judge reply: {content[:160]}"
+                return (1.0 if verdict else 0.0), content[:200]
             except Exception as exc:
                 print(f"[warn] LLM judge unavailable ({exc}); falling back to lexical support", file=sys.stderr)
                 self._down = True

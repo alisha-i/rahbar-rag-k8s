@@ -13,7 +13,7 @@ data:
     gate_thresholds:
       max_recall5_drop: 0.02
       min_faithfulness: 0.85
-      max_p95_latency_ms: 15000
+      max_p95_latency_ms: 68000   # 1.25 x measured baseline p95 (54,111 ms)
       min_abstention_correctness: 1.0
       abstention_not_below_baseline: true
       min_citation_validity: 0.95
