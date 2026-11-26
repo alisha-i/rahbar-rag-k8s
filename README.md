@@ -8,8 +8,6 @@ Alisha Iqbal (24i-3147) · Musfirah Hamid (24i-3096)
 
 ---
 
-## In one paragraph (for anyone)
-
 Students ask questions like *"What attendance do I need to sit the final exam?"*. RAHBAR
 looks the answer up **in the university's own rule documents**, answers in one or two
 sentences, and shows **exactly which document and section** the answer came from. If the
