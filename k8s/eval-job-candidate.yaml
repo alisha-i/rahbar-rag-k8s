@@ -31,7 +31,8 @@ spec:
           image: rahbar-eval:dev
           imagePullPolicy: IfNotPresent
           args: ["--api", "http://api-candidate.rahbar.svc.cluster.local:8000", "--label", "candidate",
-                 "--gate-config", "/etc/gate/gate_config.yaml", "--output-dir", "/data/results"]
+                 "--gate-config", "/etc/gate/gate_config.yaml", "--output-dir", "/data/results",
+                 "--runs", "1"]   # stochasticity is measured once, on the baseline
           envFrom:
             - configMapRef:
                 name: rahbar-config

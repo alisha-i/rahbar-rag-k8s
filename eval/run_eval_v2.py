@@ -191,7 +191,8 @@ def run_component_level_test(golden: list[dict[str, Any]], retrieve: AskFn, nois
 # =============================================================================
 
 JUDGE_PROMPT = """You are grading a retrieval-augmented answer.
-CONTEXT (the passages the system retrieved):
+QUESTION: {question}
+CONTEXT (the passages the system cited):
 <<<
 {context}
 >>>
@@ -199,8 +200,10 @@ ANSWER:
 <<<
 {answer}
 >>>
-Is every factual claim in ANSWER supported by CONTEXT? Unsupported numbers, dates or rules count as
-unsupported. Reply with JSON only: {{"faithful": true|false, "reason": "<one short sentence>"}}"""
+Read ANSWER as the answer to QUESTION. Is every fact it states (numbers, dates, rules) written in
+CONTEXT? Ignore facts in CONTEXT that the answer does not use. A short answer such as "80 percent"
+is faithful if CONTEXT states it for this question.
+Reply with JSON only: {{"faithful": true|false, "reason": "<one short sentence>"}}"""
 
 
 def _lexical_support(answer: str, context: str) -> float:
@@ -214,6 +217,31 @@ def _lexical_support(answer: str, context: str) -> float:
     return sum(1 for w in words if w in ctx) / len(words)
 
 
+def _parse_verdict(content: str) -> bool | None:
+    """Small models do not always return exactly {"faithful": true}: accept "true"/"yes"/1,
+    any key that contains "faithful", or a bare yes/no."""
+    try:
+        data = json.loads(content)
+    except json.JSONDecodeError:
+        data = None
+    if isinstance(data, dict):
+        for k, v in data.items():
+            if "faithful" in str(k).lower() or str(k).lower() in {"supported", "verdict", "answer"}:
+                if isinstance(v, bool):
+                    return v
+                sv = str(v).strip().lower()
+                if sv in {"true", "yes", "1", "faithful", "supported"}:
+                    return True
+                if sv in {"false", "no", "0", "unfaithful", "not supported", "unsupported"}:
+                    return False
+    low = content.lower()
+    if re.search(r"\b(not faithful|unfaithful|unsupported|false|no)\b", low):
+        return False
+    if re.search(r"\b(faithful|supported|true|yes)\b", low):
+        return True
+    return None
+
+
 class Judge:
     """LLM-as-judge through Ollama (temperature 0, JSON mode). Falls back to a lexical support
     score if the judge model cannot be reached; the result file records which one was used."""
@@ -225,7 +253,7 @@ class Judge:
         self.kind = f"llm:{model}"
         self._down = False
 
-    def __call__(self, answer: str, context: str) -> tuple[float, str]:
+    def __call__(self, answer: str, context: str, question: str = "") -> tuple[float, str]:
         if not self._down:
             try:
                 import httpx
@@ -233,11 +261,14 @@ class Judge:
                 r = httpx.post(self.url, timeout=120.0, json={
                     "model": self.model, "stream": False, "format": "json",
                     "options": {"temperature": 0, "seed": self.seed},
-                    "messages": [{"role": "user", "content": JUDGE_PROMPT.format(context=context[:6000], answer=answer)}],
+                    "messages": [{"role": "user", "content": JUDGE_PROMPT.format(question=question, context=context[:4000], answer=answer)}],
                 })
                 r.raise_for_status()
-                data = json.loads(r.json()["message"]["content"])
-                return (1.0 if data.get("faithful") is True else 0.0), str(data.get("reason", ""))[:200]
+                content = r.json()["message"]["content"]
+                verdict = _parse_verdict(content)
+                if verdict is None:
+                    return 0.0, f"unparseable judge reply: {content[:160]}"
+                return (1.0 if verdict else 0.0), content[:200]
             except Exception as exc:
                 print(f"[warn] LLM judge unavailable ({exc}); falling back to lexical support", file=sys.stderr)
                 self._down = True
@@ -290,8 +321,12 @@ def run_end_to_end_test(golden: list[dict[str, Any]], ask: AskFn, judge: Judge,
         else:
             false_abst.append(0.0 if answered else 1.0)
             if answered:
-                context = "\n".join(str(r.get("text") or "") for r in retrieved)
-                f, reason = judge(row["answer"], context)
+                # Judge against the passages the answer CITES (top 3 retrieved if it cites none):
+                # a 3B judge gets lost in five unrelated chunks.
+                cited = {(str(c.get("source")), str(c.get("section"))) for c in cites}
+                used = [r for r in retrieved if (str(r.get("source")), str(r.get("section"))) in cited] or retrieved[:3]
+                context = "\n---\n".join(str(r.get("text") or "") for r in used)
+                f, reason = judge(row["answer"], context, q["question"])
                 faith.append(f)
                 row.update(faithful_judge=bool(f), judge_reason=reason)
                 if q["id"] in human:
@@ -331,18 +366,30 @@ def run_end_to_end_test(golden: list[dict[str, Any]], ask: AskFn, judge: Judge,
 def http_clients(api: str) -> tuple[AskFn, AskFn]:
     import httpx
 
-    client = httpx.Client(timeout=180.0, headers={"Cache-Control": "no-cache"})
+    # No keep-alive: uvicorn closes idle connections after 5 s, and the LLM judge runs between
+    # questions, so a pooled connection is often already closed ("Server disconnected").
+    client = httpx.Client(timeout=300.0, headers={"Cache-Control": "no-cache"},
+                          limits=httpx.Limits(max_keepalive_connections=0))
     base = api.rstrip("/")
 
+    def _post(path: str, q: str) -> dict[str, Any]:
+        last: Exception | None = None
+        for attempt in range(3):
+            try:
+                r = client.post(f"{base}{path}", json={"question": q})
+                r.raise_for_status()
+                return dict(r.json())
+            except (httpx.TransportError, httpx.HTTPStatusError) as exc:
+                last = exc
+                print(f"[warn] {path} attempt {attempt + 1} failed: {exc!r}; retrying", file=sys.stderr)
+                time.sleep(3 * (attempt + 1))
+        raise RuntimeError(f"{path} failed 3 times for {q!r}") from last
+
     def ask(q: str) -> dict[str, Any]:
-        r = client.post(f"{base}/api/ask", json={"question": q})
-        r.raise_for_status()
-        return dict(r.json())
+        return _post("/api/ask", q)
 
     def retrieve(q: str) -> dict[str, Any]:
-        r = client.post(f"{base}/api/retrieve", json={"question": q})
-        r.raise_for_status()
-        return dict(r.json())
+        return _post("/api/retrieve", q)
 
     return ask, retrieve
 
@@ -446,6 +493,9 @@ def main() -> int:
     ap.add_argument("--baseline", default=None, help="Baseline result file (default: <output-dir>/latest_baseline.json)")
     ap.add_argument("--output-dir", default=os.environ.get("RESULTS_DIR", "eval/results"))
     ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument("--runs", type=int, default=2, choices=[1, 2],
+                    help="2 (default) measures stochasticity for the baseline (Part B); "
+                         "candidates are compared once against that baseline")
     ap.add_argument("--offline-stub", action="store_true", help="CI only: in-process stub pipeline")
     ap.add_argument("--allow-stub", action="store_true", help="Let --offline-stub write a result file")
     args = ap.parse_args()
@@ -474,9 +524,12 @@ def main() -> int:
         return 2
 
     run1 = run_once(golden, Path(args.benchmark), ask, retrieve, judge, human, args.seed)
-    run2 = run_once(golden, Path(args.benchmark), ask, retrieve, judge, human, args.seed)
-    f1, f2 = _flat(run1), _flat(run2)
-    deltas = {k: round(f2[k] - f1[k], 6) for k in f1 if k in f2}
+    if args.runs == 2:
+        run2 = run_once(golden, Path(args.benchmark), ask, retrieve, judge, human, args.seed)
+        f1, f2 = _flat(run1), _flat(run2)
+        deltas = {k: round(f2[k] - f1[k], 6) for k in f1 if k in f2}
+    else:
+        deltas = {}
 
     ts = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     report: dict[str, Any] = {
@@ -491,7 +544,7 @@ def main() -> int:
         "seed": args.seed,
         **run1,
         "stochasticity": {
-            "runs": 2,
+            "runs": args.runs,
             "deltas": deltas,
             "max_abs_delta": max((abs(v) for v in deltas.values()), default=0.0),
             "note": "Seeds fixed and temperature low; remaining differences come from latency jitter, "

@@ -1,0 +1,10 @@
+{"id": "q03", "question": "What CGPA threshold places an undergraduate student on academic warning at the end of a regular semester?", "answer": "2.20", "judge_said_faithful": false, "faithful": null}
+{"id": "q04", "question": "How many consecutive semesters on academic warning leads to a student being dropped from the programme?", "answer": "2", "judge_said_faithful": false, "faithful": null}
+{"id": "q07", "question": "Under the 2023 rules edition, how many consecutive semesters on warning caused a student to be dropped?", "answer": "two", "judge_said_faithful": false, "faithful": null}
+{"id": "q09", "question": "What is the tuition fee per credit hour for BS programmes in Fall 2026?", "answer": "10,000", "judge_said_faithful": false, "faithful": null}
+{"id": "q10", "question": "How much does one copy of a transcript cost?", "answer": "1,500", "judge_said_faithful": false, "faithful": null}
+{"id": "q11", "question": "How much tuition is refunded if a course is dropped within the first 10 days of classes?", "answer": "Tuition is refunded in full.", "judge_said_faithful": false, "faithful": null}
+{"id": "q12", "question": "What percentage of tuition is refunded if a course is dropped between day 11 and day 20?", "answer": "50%", "judge_said_faithful": false, "faithful": null}
+{"id": "q15", "question": "What is the fee per credit hour for MS programmes?", "answer": "12,500", "judge_said_faithful": false, "faithful": null}
+{"id": "q16", "question": "From which semester does the Academic Rules 2026 edition replace the 2023 edition?", "answer": "The Fall 2026 semester.", "judge_said_faithful": false, "faithful": null}
+{"id": "q28", "question": "According to the Fee Regulations in Batch B, how many departmental students are granted merit scholarships based on preceding SGPA?", "answer": "3", "judge_said_faithful": false, "faithful": null}

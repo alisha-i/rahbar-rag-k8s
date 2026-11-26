@@ -1,0 +1,332 @@
+{
+  "total_scanned": 13,
+  "passed_count": 7,
+  "quarantined_count": 6,
+  "details": [
+    {
+      "source": "academic-rules-2023.md",
+      "passed": true,
+      "checks": {
+        "quality": {
+          "pass": true,
+          "reason": "Quality check passed: clean readable text."
+        },
+        "completeness": {
+          "pass": true,
+          "reason": "Completeness check passed: all metadata present and body intact."
+        },
+        "recency": {
+          "pass": false,
+          "reason": "Newer version detected: academic-rules-2026.md (2026). Archived and marked superseded=True (excluded from retrieval, not quarantined).",
+          "superseded": true
+        },
+        "uniqueness": {
+          "pass": true,
+          "reason": "Uniqueness check passed: distinct content."
+        }
+      },
+      "quarantined": false,
+      "quarantine_path": null
+    },
+    {
+      "source": "academic-rules-2026.md",
+      "passed": true,
+      "checks": {
+        "quality": {
+          "pass": true,
+          "reason": "Quality check passed: clean readable text."
+        },
+        "completeness": {
+          "pass": true,
+          "reason": "Completeness check passed: all metadata present and body intact."
+        },
+        "recency": {
+          "pass": false,
+          "reason": "Newer version detected: doc07_academic_rules_2027.md (2027). Archived and marked superseded=True (excluded from retrieval, not quarantined).",
+          "superseded": true
+        },
+        "uniqueness": {
+          "pass": true,
+          "reason": "Uniqueness check passed: distinct content."
+        }
+      },
+      "quarantined": false,
+      "quarantine_path": null
+    },
+    {
+      "source": "fees-2026.md",
+      "passed": true,
+      "checks": {
+        "quality": {
+          "pass": true,
+          "reason": "Quality check passed: clean readable text."
+        },
+        "completeness": {
+          "pass": true,
+          "reason": "Completeness check passed: all metadata present and body intact."
+        },
+        "recency": {
+          "pass": true,
+          "reason": "Most recent version detected (2026).",
+          "superseded": false
+        },
+        "uniqueness": {
+          "pass": true,
+          "reason": "Uniqueness check passed: distinct content."
+        }
+      },
+      "quarantined": false,
+      "quarantine_path": null
+    },
+    {
+      "source": "doc01_fee_structure.md",
+      "passed": true,
+      "checks": {
+        "quality": {
+          "pass": true,
+          "reason": "Quality check passed: clean readable text."
+        },
+        "completeness": {
+          "pass": true,
+          "reason": "Completeness check passed: all metadata present and body intact."
+        },
+        "recency": {
+          "pass": true,
+          "reason": "Most recent version detected (2026-Fall).",
+          "superseded": false
+        },
+        "uniqueness": {
+          "pass": true,
+          "reason": "Uniqueness check passed: distinct content."
+        }
+      },
+      "quarantined": false,
+      "quarantine_path": null
+    },
+    {
+      "source": "doc02_fee_structure_exact_dup1.md",
+      "passed": false,
+      "checks": {
+        "quality": {
+          "pass": true,
+          "reason": "Quality check passed: clean readable text."
+        },
+        "completeness": {
+          "pass": true,
+          "reason": "Completeness check passed: all metadata present and body intact."
+        },
+        "recency": {
+          "pass": true,
+          "reason": "Most recent version detected (2026-Fall).",
+          "superseded": false
+        },
+        "uniqueness": {
+          "pass": false,
+          "reason": "Exact duplicate detected: identical SHA-256 hash to doc01_fee_structure.md."
+        }
+      },
+      "quarantined": true,
+      "quarantine_path": "/corpus/quarantine/doc02_fee_structure_exact_dup1.md"
+    },
+    {
+      "source": "doc03_fee_structure_exact_dup2.md",
+      "passed": false,
+      "checks": {
+        "quality": {
+          "pass": true,
+          "reason": "Quality check passed: clean readable text."
+        },
+        "completeness": {
+          "pass": true,
+          "reason": "Completeness check passed: all metadata present and body intact."
+        },
+        "recency": {
+          "pass": true,
+          "reason": "Most recent version detected (2026-Fall).",
+          "superseded": false
+        },
+        "uniqueness": {
+          "pass": false,
+          "reason": "Exact duplicate detected: identical SHA-256 hash to doc01_fee_structure.md."
+        }
+      },
+      "quarantined": true,
+      "quarantine_path": "/corpus/quarantine/doc03_fee_structure_exact_dup2.md"
+    },
+    {
+      "source": "doc04_fee_structure_near_dup.md",
+      "passed": false,
+      "checks": {
+        "quality": {
+          "pass": true,
+          "reason": "Quality check passed: clean readable text."
+        },
+        "completeness": {
+          "pass": true,
+          "reason": "Completeness check passed: all metadata present and body intact."
+        },
+        "recency": {
+          "pass": true,
+          "reason": "Most recent version detected (2026-Fall).",
+          "superseded": false
+        },
+        "uniqueness": {
+          "pass": false,
+          "reason": "Near-duplicate detected (95.5% similarity) with doc01_fee_structure.md."
+        }
+      },
+      "quarantined": true,
+      "quarantine_path": "/corpus/quarantine/doc04_fee_structure_near_dup.md"
+    },
+    {
+      "source": "doc05_corrupt_truncated.md",
+      "passed": false,
+      "checks": {
+        "quality": {
+          "pass": false,
+          "reason": "Garbled binary stream or extraction error markers detected."
+        },
+        "completeness": {
+          "pass": false,
+          "reason": "Premature truncation marker detected in document body."
+        },
+        "recency": {
+          "pass": true,
+          "reason": "Most recent version detected (2026-01).",
+          "superseded": false
+        },
+        "uniqueness": {
+          "pass": true,
+          "reason": "Uniqueness check passed: distinct content."
+        }
+      },
+      "quarantined": true,
+      "quarantine_path": "/corpus/quarantine/doc05_corrupt_truncated.md"
+    },
+    {
+      "source": "doc06_missing_metadata.md",
+      "passed": false,
+      "checks": {
+        "quality": {
+          "pass": true,
+          "reason": "Quality check passed: clean readable text."
+        },
+        "completeness": {
+          "pass": false,
+          "reason": "Missing required metadata fields: title, doc_version."
+        },
+        "recency": {
+          "pass": true,
+          "reason": "Most recent version detected (unknown).",
+          "superseded": false
+        },
+        "uniqueness": {
+          "pass": true,
+          "reason": "Uniqueness check passed: distinct content."
+        }
+      },
+      "quarantined": true,
+      "quarantine_path": "/corpus/quarantine/doc06_missing_metadata.md"
+    },
+    {
+      "source": "doc07_academic_rules_2027.md",
+      "passed": true,
+      "checks": {
+        "quality": {
+          "pass": true,
+          "reason": "Quality check passed: clean readable text."
+        },
+        "completeness": {
+          "pass": true,
+          "reason": "Completeness check passed: all metadata present and body intact."
+        },
+        "recency": {
+          "pass": true,
+          "reason": "Most recent version detected (2027).",
+          "superseded": false
+        },
+        "uniqueness": {
+          "pass": true,
+          "reason": "Uniqueness check passed: distinct content."
+        }
+      },
+      "quarantined": false,
+      "quarantine_path": null
+    },
+    {
+      "source": "doc08_prompt_injection.md",
+      "passed": true,
+      "checks": {
+        "quality": {
+          "pass": true,
+          "reason": "Quality check passed: clean readable text."
+        },
+        "completeness": {
+          "pass": true,
+          "reason": "Completeness check passed: all metadata present and body intact."
+        },
+        "recency": {
+          "pass": true,
+          "reason": "Most recent version detected (2026-Fall).",
+          "superseded": false
+        },
+        "uniqueness": {
+          "pass": true,
+          "reason": "Uniqueness check passed: distinct content."
+        }
+      },
+      "quarantined": false,
+      "quarantine_path": null
+    },
+    {
+      "source": "doc09_library_regulations.md",
+      "passed": true,
+      "checks": {
+        "quality": {
+          "pass": true,
+          "reason": "Quality check passed: clean readable text."
+        },
+        "completeness": {
+          "pass": true,
+          "reason": "Completeness check passed: all metadata present and body intact."
+        },
+        "recency": {
+          "pass": true,
+          "reason": "Most recent version detected (2026-09).",
+          "superseded": false
+        },
+        "uniqueness": {
+          "pass": true,
+          "reason": "Uniqueness check passed: distinct content."
+        }
+      },
+      "quarantined": false,
+      "quarantine_path": null
+    },
+    {
+      "source": "doc10_empty_file.md",
+      "passed": false,
+      "checks": {
+        "quality": {
+          "pass": false,
+          "reason": "Document text is empty or trivially short (< 25 chars)."
+        },
+        "completeness": {
+          "pass": false,
+          "reason": "Missing required metadata fields: title, doc_version."
+        },
+        "recency": {
+          "pass": true,
+          "reason": "Most recent version detected (unknown).",
+          "superseded": false
+        },
+        "uniqueness": {
+          "pass": true,
+          "reason": "Uniqueness check passed: distinct content."
+        }
+      },
+      "quarantined": true,
+      "quarantine_path": "/corpus/quarantine/doc10_empty_file.md"
+    }
+  ]
+}

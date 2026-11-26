@@ -24,9 +24,42 @@ FALLBACK_ANSWER = Answer(
 )
 
 
-def parse_answer_json(raw: str) -> Answer:
+DECLINE_PATTERN = re.compile(
+    r"(does not|do not|doesn't|don't)\s+(contain|provide|mention|specify|say|include|cover)"
+    r"|no (information|mention|details?)|not (available|covered|mentioned|specified|provided)"
+    r"|cannot|can't|unable|insufficient|not enough",
+    re.I,
+)
+
+
+def _map_citations(raw_cites: list[Any], passages: list[Passage] | None) -> list[Any]:
+    """Small models often cite by evidence number ([1], "1", {"evidence": 1}). Map those to the
+    retrieved passage, so the citation is exact instead of being dropped as fabricated."""
+    if not passages:
+        return [c for c in raw_cites if isinstance(c, dict)]
+    out: list[Any] = []
+    for c in raw_cites:
+        n = None
+        if isinstance(c, int):
+            n = c
+        elif isinstance(c, str) and re.fullmatch(r"\[?\s*\d+\s*\]?", c.strip()):
+            n = int(re.sub(r"\D", "", c))
+        elif isinstance(c, dict) and not c.get("source") and str(c.get("evidence", "")).strip("[] ").isdigit():
+            n = int(str(c["evidence"]).strip("[] "))
+        if n is not None:
+            if 1 <= n <= len(passages):
+                p = passages[n - 1]
+                out.append({"source": p.source, "section": p.section, "page": p.page})
+        elif isinstance(c, dict):
+            out.append(c)
+    return out
+
+
+def parse_answer_json(raw: str, passages: list[Passage] | None = None) -> Answer:
     """Robustly parse LLM output into an Answer Pydantic model.
-    Handles markdown fences (```json ... ```), preamble text, and missing optional keys.
+    Handles markdown fences (```json ... ```), preamble text, missing optional keys, citations
+    given as evidence numbers, and a 3B model's habit of answering correctly from the evidence
+    while setting answered_from_context=false.
     """
     clean = raw.strip()
     if "```" in clean:
@@ -53,8 +86,13 @@ def parse_answer_json(raw: str) -> Answer:
         data["answer"] = data.get("text") or data.get("response") or ""
     if "citations" not in data or not isinstance(data["citations"], list):
         data["citations"] = []
+    data["citations"] = _map_citations(data["citations"], passages)
     if "answered_from_context" not in data:
         data["answered_from_context"] = len(data["citations"]) > 0
+    # Reconcile: a non-declining answer that cites retrieved evidence IS answered from context.
+    if (data.get("answered_from_context") is not True and data["citations"]
+            and str(data["answer"]).strip() and not DECLINE_PATTERN.search(str(data["answer"]))):
+        data["answered_from_context"] = True
     if "confidence" not in data or data["confidence"] not in ("high", "medium", "low"):
         data["confidence"] = "medium" if data["answered_from_context"] else "low"
 
@@ -87,6 +125,8 @@ def _build_augmented_prompt(question: str, passages: list[Passage]) -> str:
         "3. Every citation MUST match the exact source, section, and page from which the claim was drawn.\n"
         "4. If the provided evidence does not contain sufficient information to answer the question, "
         "set answered_from_context to false, citations to [], and decline honestly.\n"
+        "4b. If your answer states any fact taken from the evidence, answered_from_context MUST be true "
+        "and citations MUST list that evidence. Use false ONLY when you decline.\n"
         "5. Output MUST be ONLY a valid JSON object matching this schema:\n"
         "{\n"
         '  "reasoning": "brief explanation",\n'
@@ -122,7 +162,8 @@ class OllamaProvider:
         # Attempt call with timeout (section 3.4)
         for attempt in range(1, 3):  # 1 initial try + 1 retry on validation failure
             try:
-                with httpx.Client(timeout=httpx.Timeout(60.0, connect=10.0)) as client:
+                # A 3B model on a laptop CPU needs up to ~60 s; allow 120 s before the fallback.
+                with httpx.Client(timeout=httpx.Timeout(120.0, connect=10.0)) as client:
                     resp = client.post(url, json=payload)
                     if resp.status_code != 200:
                         log.warning("Ollama returned status %d on attempt %d: %s", resp.status_code, attempt, resp.text)
@@ -131,7 +172,7 @@ class OllamaProvider:
                     data = resp.json()
                     content = data.get("message", {}).get("content", "")
                     # Validate output robustly with Pydantic
-                    parsed_answer = parse_answer_json(content)
+                    parsed_answer = parse_answer_json(content, passages)
                     return parsed_answer
 
             except (ValidationError, json.JSONDecodeError) as val_err:

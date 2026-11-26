@@ -1,0 +1,844 @@
+{
+  "timestamp": "2026-11-26T17:57:13Z",
+  "label": "baseline",
+  "pipeline_mode": "live",
+  "api": "http://api.rahbar.svc.cluster.local:8000",
+  "collection": "rahbar",
+  "embedding_version": "nomic-embed-text|chunk400-ov50",
+  "golden_file": "eval/golden.jsonl",
+  "golden_questions": 28,
+  "seed": 42,
+  "module_level": {
+    "embed_model": "nomic-embed-text",
+    "embedder": "ollama",
+    "paraphrase_pairs": 15,
+    "unrelated_pairs": 15,
+    "paraphrase_mean_sim": 0.7466,
+    "unrelated_mean_sim": 0.4701,
+    "cosine_gap": 0.2766,
+    "paraphrase_min_sim": 0.5395,
+    "unrelated_max_sim": 0.5401,
+    "embedding_ms_per_chunk": 156.18,
+    "determinism_max_diff": 0.0,
+    "dimension": 768
+  },
+  "component_level": {
+    "recall_at_3": 0.6364,
+    "recall_at_5": 0.6364,
+    "mrr": 0.5833,
+    "ndcg_at_5": 0.5969,
+    "questions": 22,
+    "by_category": {
+      "answerable": {
+        "n": 16,
+        "recall_at_5": 0.625
+      },
+      "hard": {
+        "n": 6,
+        "recall_at_5": 0.6667
+      }
+    },
+    "per_question": [
+      {
+        "id": "q01",
+        "category": "answerable",
+        "top_sources": [
+          "doc07_academic_rules_2027.md",
+          "doc08_prompt_injection.md",
+          "doc01_fee_structure.md",
+          "doc08_prompt_injection.md",
+          "fees-2026.md"
+        ],
+        "top1_score": 0.8362,
+        "recall_at_3": 0.0,
+        "recall_at_5": 0.0,
+        "mrr": 0.0,
+        "ndcg_at_5": 0.0
+      },
+      {
+        "id": "q02",
+        "category": "answerable",
+        "top_sources": [
+          "doc07_academic_rules_2027.md",
+          "doc07_academic_rules_2027.md",
+          "doc08_prompt_injection.md",
+          "doc01_fee_structure.md",
+          "fees-2026.md"
+        ],
+        "top1_score": 0.716,
+        "recall_at_3": 0.0,
+        "recall_at_5": 0.0,
+        "mrr": 0.0,
+        "ndcg_at_5": 0.0
+      },
+      {
+        "id": "q03",
+        "category": "answerable",
+        "top_sources": [
+          "doc07_academic_rules_2027.md",
+          "doc07_academic_rules_2027.md",
+          "doc01_fee_structure.md",
+          "doc07_academic_rules_2027.md",
+          "fees-2026.md"
+        ],
+        "top1_score": 0.8224,
+        "recall_at_3": 0.0,
+        "recall_at_5": 0.0,
+        "mrr": 0.0,
+        "ndcg_at_5": 0.0
+      },
+      {
+        "id": "q04",
+        "category": "answerable",
+        "top_sources": [
+          "doc07_academic_rules_2027.md",
+          "doc01_fee_structure.md",
+          "fees-2026.md",
+          "doc01_fee_structure.md",
+          "doc09_library_regulations.md"
+        ],
+        "top1_score": 0.8228,
+        "recall_at_3": 0.0,
+        "recall_at_5": 0.0,
+        "mrr": 0.0,
+        "ndcg_at_5": 0.0
+      },
+      {
+        "id": "q05",
+        "category": "answerable",
+        "top_sources": [
+          "doc07_academic_rules_2027.md",
+          "doc07_academic_rules_2027.md",
+          "fees-2026.md",
+          "doc08_prompt_injection.md",
+          "fees-2026.md"
+        ],
+        "top1_score": 0.6543,
+        "recall_at_3": 0.0,
+        "recall_at_5": 0.0,
+        "mrr": 0.0,
+        "ndcg_at_5": 0.0
+      },
+      {
+        "id": "q06",
+        "category": "answerable",
+        "top_sources": [
+          "doc07_academic_rules_2027.md",
+          "academic-rules-2023.md",
+          "academic-rules-2026.md",
+          "academic-rules-2023.md",
+          "academic-rules-2026.md"
+        ],
+        "top1_score": 0.764,
+        "recall_at_3": 1.0,
+        "recall_at_5": 1.0,
+        "mrr": 0.5,
+        "ndcg_at_5": 0.6309297535714575
+      },
+      {
+        "id": "q07",
+        "category": "answerable",
+        "top_sources": [
+          "academic-rules-2023.md",
+          "doc07_academic_rules_2027.md",
+          "academic-rules-2026.md",
+          "fees-2026.md",
+          "academic-rules-2023.md"
+        ],
+        "top1_score": 0.7991,
+        "recall_at_3": 1.0,
+        "recall_at_5": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_5": 1.0
+      },
+      {
+        "id": "q08",
+        "category": "answerable",
+        "top_sources": [
+          "fees-2026.md",
+          "doc01_fee_structure.md",
+          "doc08_prompt_injection.md",
+          "doc09_library_regulations.md",
+          "doc01_fee_structure.md"
+        ],
+        "top1_score": 0.7079,
+        "recall_at_3": 1.0,
+        "recall_at_5": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_5": 1.0
+      },
+      {
+        "id": "q09",
+        "category": "answerable",
+        "top_sources": [
+          "fees-2026.md",
+          "doc01_fee_structure.md",
+          "fees-2026.md",
+          "doc07_academic_rules_2027.md",
+          "doc01_fee_structure.md"
+        ],
+        "top1_score": 0.7786,
+        "recall_at_3": 1.0,
+        "recall_at_5": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_5": 1.0
+      },
+      {
+        "id": "q10",
+        "category": "answerable",
+        "top_sources": [
+          "fees-2026.md",
+          "fees-2026.md",
+          "doc09_library_regulations.md",
+          "doc01_fee_structure.md",
+          "doc09_library_regulations.md"
+        ],
+        "top1_score": 0.6992,
+        "recall_at_3": 1.0,
+        "recall_at_5": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_5": 1.0
+      },
+      {
+        "id": "q11",
+        "category": "answerable",
+        "top_sources": [
+          "fees-2026.md",
+          "doc01_fee_structure.md",
+          "doc01_fee_structure.md",
+          "doc09_library_regulations.md",
+          "fees-2026.md"
+        ],
+        "top1_score": 0.8781,
+        "recall_at_3": 1.0,
+        "recall_at_5": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_5": 1.0
+      },
+      {
+        "id": "q12",
+        "category": "answerable",
+        "top_sources": [
+          "fees-2026.md",
+          "doc01_fee_structure.md",
+          "doc01_fee_structure.md",
+          "doc07_academic_rules_2027.md",
+          "doc07_academic_rules_2027.md"
+        ],
+        "top1_score": 0.893,
+        "recall_at_3": 1.0,
+        "recall_at_5": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_5": 1.0
+      },
+      {
+        "id": "q13",
+        "category": "answerable",
+        "top_sources": [
+          "doc07_academic_rules_2027.md",
+          "doc07_academic_rules_2027.md",
+          "doc08_prompt_injection.md",
+          "doc01_fee_structure.md",
+          "doc08_prompt_injection.md"
+        ],
+        "top1_score": 0.6842,
+        "recall_at_3": 0.0,
+        "recall_at_5": 0.0,
+        "mrr": 0.0,
+        "ndcg_at_5": 0.0
+      },
+      {
+        "id": "q14",
+        "category": "answerable",
+        "top_sources": [
+          "fees-2026.md",
+          "doc01_fee_structure.md",
+          "doc01_fee_structure.md",
+          "doc09_library_regulations.md",
+          "doc07_academic_rules_2027.md"
+        ],
+        "top1_score": 0.8771,
+        "recall_at_3": 1.0,
+        "recall_at_5": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_5": 1.0
+      },
+      {
+        "id": "q15",
+        "category": "answerable",
+        "top_sources": [
+          "fees-2026.md",
+          "doc01_fee_structure.md",
+          "fees-2026.md",
+          "doc01_fee_structure.md",
+          "doc09_library_regulations.md"
+        ],
+        "top1_score": 0.7695,
+        "recall_at_3": 1.0,
+        "recall_at_5": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_5": 1.0
+      },
+      {
+        "id": "q16",
+        "category": "answerable",
+        "top_sources": [
+          "academic-rules-2026.md",
+          "academic-rules-2023.md",
+          "doc07_academic_rules_2027.md",
+          "doc07_academic_rules_2027.md",
+          "academic-rules-2023.md"
+        ],
+        "top1_score": 0.8701,
+        "recall_at_3": 1.0,
+        "recall_at_5": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_5": 1.0
+      },
+      {
+        "id": "q23",
+        "category": "hard",
+        "top_sources": [
+          "doc07_academic_rules_2027.md",
+          "doc07_academic_rules_2027.md",
+          "doc08_prompt_injection.md",
+          "fees-2026.md",
+          "doc07_academic_rules_2027.md"
+        ],
+        "top1_score": 0.7409,
+        "recall_at_3": 0.0,
+        "recall_at_5": 0.0,
+        "mrr": 0.0,
+        "ndcg_at_5": 0.0
+      },
+      {
+        "id": "q24",
+        "category": "hard",
+        "top_sources": [
+          "doc07_academic_rules_2027.md",
+          "doc07_academic_rules_2027.md",
+          "fees-2026.md",
+          "doc01_fee_structure.md",
+          "fees-2026.md"
+        ],
+        "top1_score": 0.6422,
+        "recall_at_3": 0.0,
+        "recall_at_5": 0.0,
+        "mrr": 0.0,
+        "ndcg_at_5": 0.0
+      },
+      {
+        "id": "q25",
+        "category": "hard",
+        "top_sources": [
+          "academic-rules-2023.md",
+          "academic-rules-2023.md",
+          "academic-rules-2026.md",
+          "doc07_academic_rules_2027.md",
+          "doc07_academic_rules_2027.md"
+        ],
+        "top1_score": 0.657,
+        "recall_at_3": 1.0,
+        "recall_at_5": 1.0,
+        "mrr": 0.3333333333333333,
+        "ndcg_at_5": 0.5
+      },
+      {
+        "id": "q26",
+        "category": "hard",
+        "top_sources": [
+          "doc09_library_regulations.md",
+          "doc01_fee_structure.md",
+          "doc07_academic_rules_2027.md",
+          "doc01_fee_structure.md",
+          "fees-2026.md"
+        ],
+        "top1_score": 0.8293,
+        "recall_at_3": 1.0,
+        "recall_at_5": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_5": 1.0
+      },
+      {
+        "id": "q27",
+        "category": "hard",
+        "top_sources": [
+          "doc07_academic_rules_2027.md",
+          "doc08_prompt_injection.md",
+          "doc07_academic_rules_2027.md",
+          "doc07_academic_rules_2027.md",
+          "doc08_prompt_injection.md"
+        ],
+        "top1_score": 0.8076,
+        "recall_at_3": 1.0,
+        "recall_at_5": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_5": 1.0
+      },
+      {
+        "id": "q28",
+        "category": "hard",
+        "top_sources": [
+          "doc01_fee_structure.md",
+          "doc07_academic_rules_2027.md",
+          "fees-2026.md",
+          "doc01_fee_structure.md",
+          "fees-2026.md"
+        ],
+        "top1_score": 0.7709,
+        "recall_at_3": 1.0,
+        "recall_at_5": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_5": 1.0
+      }
+    ],
+    "noise": {
+      "type": "typos (deterministic letter swaps)",
+      "recall_at_3": 0.6364,
+      "recall_at_5": 0.6364,
+      "mrr": 0.6061,
+      "ndcg_at_5": 0.6136,
+      "delta": {
+        "recall_at_3": 0.0,
+        "recall_at_5": 0.0,
+        "mrr": 0.0228,
+        "ndcg_at_5": 0.0167
+      }
+    }
+  },
+  "end_to_end_level": {
+    "judge": "llm:llama3.2:3b",
+    "faithfulness": 0.0,
+    "faithfulness_n": 10,
+    "human_labelled": 0,
+    "human_judge_agreement": null,
+    "abstention_correctness": 1.0,
+    "unanswerable_n": 6,
+    "false_abstention_rate": 0.5455,
+    "citation_validity": 1.0,
+    "answer_contains_ground_truth": 0.5,
+    "latency_p50_ms": 32513.8,
+    "latency_p95_ms": 54111.3,
+    "total_questions": 28,
+    "per_question": [
+      {
+        "id": "q01",
+        "category": "answerable",
+        "question": "What is the minimum attendance percentage required to sit in final examinations?",
+        "answered_from_context": false,
+        "answer": "85 percent",
+        "citations": [],
+        "trace_id": "tr-881fe376844a",
+        "latency_ms": 54111.3
+      },
+      {
+        "id": "q02",
+        "category": "answerable",
+        "question": "What grade does a student receive if their attendance falls below the minimum required threshold?",
+        "answered_from_context": false,
+        "answer": "cannot be determined",
+        "citations": [],
+        "trace_id": "tr-4a9d4f101a6d",
+        "latency_ms": 32513.8
+      },
+      {
+        "id": "q03",
+        "category": "answerable",
+        "question": "What CGPA threshold places an undergraduate student on academic warning at the end of a regular semester?",
+        "answered_from_context": true,
+        "answer": "2.20",
+        "citations": [
+          {
+            "source": "doc07_academic_rules_2027.md",
+            "section": "2. Academic Warning & Probation",
+            "page": 1
+          }
+        ],
+        "trace_id": "tr-f1859dc79399",
+        "latency_ms": 37088.0,
+        "faithful_judge": false,
+        "judge_reason": "Unsupported number: 10,000 for MS programme fee per credit hour"
+      },
+      {
+        "id": "q04",
+        "category": "answerable",
+        "question": "How many consecutive semesters on academic warning leads to a student being dropped from the programme?",
+        "answered_from_context": true,
+        "answer": "2",
+        "citations": [],
+        "trace_id": "tr-cbf6f71fbd17",
+        "latency_ms": 32748.1,
+        "faithful_judge": false,
+        "judge_reason": "Unsupported numbers: 100% and 50% are not defined in the CONTEXT"
+      },
+      {
+        "id": "q05",
+        "category": "answerable",
+        "question": "When a student repeats a course to improve their CGPA, which attempt grade counts?",
+        "answered_from_context": false,
+        "answer": "Cannot be determined",
+        "citations": [],
+        "trace_id": "tr-43a860d7d48c",
+        "latency_ms": 31981.0
+      },
+      {
+        "id": "q06",
+        "category": "answerable",
+        "question": "What was the minimum attendance percentage requirement according to the 2023 academic rules edition?",
+        "answered_from_context": false,
+        "answer": "75 percent",
+        "citations": [],
+        "trace_id": "tr-a88305f86113",
+        "latency_ms": 31496.9
+      },
+      {
+        "id": "q07",
+        "category": "answerable",
+        "question": "Under the 2023 rules edition, how many consecutive semesters on warning caused a student to be dropped?",
+        "answered_from_context": true,
+        "answer": "two",
+        "citations": [
+          {
+            "source": "academic-rules-2023.md",
+            "section": "2. Academic warning",
+            "page": 1
+          }
+        ],
+        "trace_id": "tr-c8e8d7f46cc3",
+        "latency_ms": 37103.7,
+        "faithful_judge": false,
+        "judge_reason": "Unsupported number: 2.00 and 2.20"
+      },
+      {
+        "id": "q08",
+        "category": "answerable",
+        "question": "What is the late registration charge in the Fall 2026 fee schedule?",
+        "answered_from_context": false,
+        "answer": "3,000",
+        "citations": [],
+        "trace_id": "tr-afdaa35c691e",
+        "latency_ms": 32470.5
+      },
+      {
+        "id": "q09",
+        "category": "answerable",
+        "question": "What is the tuition fee per credit hour for BS programmes in Fall 2026?",
+        "answered_from_context": true,
+        "answer": "10,000",
+        "citations": [
+          {
+            "source": "fees-2026.md",
+            "section": "1. Tuition",
+            "page": 1
+          }
+        ],
+        "trace_id": "tr-210893b396bb",
+        "latency_ms": 32737.1,
+        "faithful_judge": false,
+        "judge_reason": "Unsupported number: 10,000 is not specified as the fee for MS programme in CONTEXT"
+      },
+      {
+        "id": "q10",
+        "category": "answerable",
+        "question": "How much does one copy of a transcript cost?",
+        "answered_from_context": true,
+        "answer": "1,500",
+        "citations": [
+          {
+            "source": "fees-2026.md",
+            "section": "2. Other charges",
+            "page": 1
+          }
+        ],
+        "trace_id": "tr-ef1e0f48e45b",
+        "latency_ms": 30406.9,
+        "faithful_judge": false,
+        "judge_reason": "Unsupported amount for late registration charge"
+      },
+      {
+        "id": "q11",
+        "category": "answerable",
+        "question": "How much tuition is refunded if a course is dropped within the first 10 days of classes?",
+        "answered_from_context": true,
+        "answer": "Tuition is refunded in full.",
+        "citations": [],
+        "trace_id": "tr-2cca90ee300e",
+        "latency_ms": 35186.2,
+        "faithful_judge": false,
+        "judge_reason": "Unsupported date range for refund after day 20"
+      },
+      {
+        "id": "q12",
+        "category": "answerable",
+        "question": "What percentage of tuition is refunded if a course is dropped between day 11 and day 20?",
+        "answered_from_context": true,
+        "answer": "50%",
+        "citations": [
+          {
+            "source": "fees-2026.md",
+            "section": "3. Refunds",
+            "page": 1
+          }
+        ],
+        "trace_id": "tr-7d703f772122",
+        "latency_ms": 24296.8,
+        "faithful_judge": false,
+        "judge_reason": "The answer contains an unsupported percentage of 50% which is not mentioned in the CONTEXT."
+      },
+      {
+        "id": "q13",
+        "category": "answerable",
+        "question": "Who has the authority to condone student absence below 80% for documented medical reasons?",
+        "answered_from_context": false,
+        "answer": "The evidence does not provide information on who has the authority to condone student absence below 80% for documented medical reasons.",
+        "citations": [],
+        "trace_id": "tr-5ddfdb192bc7",
+        "latency_ms": 34741.2
+      },
+      {
+        "id": "q14",
+        "category": "answerable",
+        "question": "Is any tuition refunded if a course is dropped after day 20 of classes?",
+        "answered_from_context": false,
+        "answer": "No tuition refund is given after day 20 of classes.",
+        "citations": [],
+        "trace_id": "tr-643ce58cc6c3",
+        "latency_ms": 26813.8
+      },
+      {
+        "id": "q15",
+        "category": "answerable",
+        "question": "What is the fee per credit hour for MS programmes?",
+        "answered_from_context": true,
+        "answer": "12,500",
+        "citations": [
+          {
+            "source": "fees-2026.md",
+            "section": "1. Tuition",
+            "page": 1
+          }
+        ],
+        "trace_id": "tr-f84721eef61a",
+        "latency_ms": 34610.1,
+        "faithful_judge": false,
+        "judge_reason": "Unsupported number: 12,500 is not present in the CONTEXT for MS programme fee per credit hour."
+      },
+      {
+        "id": "q16",
+        "category": "answerable",
+        "question": "From which semester does the Academic Rules 2026 edition replace the 2023 edition?",
+        "answered_from_context": true,
+        "answer": "The Fall 2026 semester.",
+        "citations": [
+          {
+            "source": "academic-rules-2026.md",
+            "section": "Margalla Institute of Technology: Academic Rules (2026 edition)",
+            "page": 1
+          }
+        ],
+        "trace_id": "tr-7af2612f8539",
+        "latency_ms": 35250.7,
+        "faithful_judge": false,
+        "judge_reason": "The Fall 2026 semester does not specify the attendance requirement, which is stated in rule 1.1 of the 2026 edition."
+      },
+      {
+        "id": "q17",
+        "category": "unanswerable",
+        "question": "What are the eligibility criteria and room allocation procedures for university on-campus student hostels?",
+        "answered_from_context": false,
+        "answer": "No information available",
+        "citations": [],
+        "trace_id": "tr-d606df66e3ec",
+        "latency_ms": 26978.5,
+        "abstention_correct": true
+      },
+      {
+        "id": "q18",
+        "category": "unanswerable",
+        "question": "What are the bus route schedules, pickup stops, and transport fee charges for the commuter shuttle service?",
+        "answered_from_context": false,
+        "answer": "No information is available on bus route schedules, pickup stops, and transport fee charges for the commuter shuttle service.",
+        "citations": [],
+        "trace_id": "tr-a75858e62d17",
+        "latency_ms": 34190.5,
+        "abstention_correct": true
+      },
+      {
+        "id": "q19",
+        "category": "unanswerable",
+        "question": "Does the student health clinic cover dental surgery expenses and hospital emergency admissions?",
+        "answered_from_context": false,
+        "answer": "No direct information is available on the student health clinic's coverage of dental surgery expenses and hospital emergency admissions.",
+        "citations": [],
+        "trace_id": "tr-90a1d8b3fea7",
+        "latency_ms": 29858.2,
+        "abstention_correct": true
+      },
+      {
+        "id": "q20",
+        "category": "unanswerable",
+        "question": "What are the booking guidelines, hourly rates, and floodlight charges for the cricket sports complex?",
+        "answered_from_context": false,
+        "answer": "Not available",
+        "citations": [],
+        "trace_id": "tr-4e78648a2b48",
+        "latency_ms": 20238.5,
+        "abstention_correct": true
+      },
+      {
+        "id": "q21",
+        "category": "unanswerable",
+        "question": "How can a student apply for an emergency installment plan for paying university tuition fees?",
+        "answered_from_context": false,
+        "answer": "No information is available on emergency installment plans.",
+        "citations": [],
+        "trace_id": "tr-739c895a22c3",
+        "latency_ms": 26300.0,
+        "abstention_correct": true
+      },
+      {
+        "id": "q22",
+        "category": "unanswerable",
+        "question": "What are the copyright ownership policies regarding undergraduate capstone project source code and patents?",
+        "answered_from_context": false,
+        "answer": "No information available",
+        "citations": [],
+        "trace_id": "tr-5e691f0b3dbe",
+        "latency_ms": 27462.3,
+        "abstention_correct": true
+      },
+      {
+        "id": "q23",
+        "category": "hard",
+        "question": "If a student registered in 2026 with a 1.95 CGPA misses 25% of lectures, what are the combined academic consequences regarding exam eligibility and standing?",
+        "answered_from_context": false,
+        "answer": "The student is not eligible for the final examination due to missing 25% of lectures, and will be dropped from the university roll after two consecutive semesters on academic warning.",
+        "citations": [],
+        "trace_id": "tr-3b9fbb84b38d",
+        "latency_ms": 52596.2
+      },
+      {
+        "id": "q24",
+        "category": "hard",
+        "question": "Explain how the repetition of a course affects a student's GPA calculation if their new score happens to be lower than their initial attempt.",
+        "answered_from_context": false,
+        "answer": "The repetition of a course does not affect a student's GPA calculation. According to Evidence [1], a student's cumulative grade point average (CGPA) is calculated at the end of a regular semester, and a new score is not added to the previous score.",
+        "citations": [],
+        "trace_id": "tr-b59067b42b18",
+        "latency_ms": 49089.7
+      },
+      {
+        "id": "q25",
+        "category": "hard",
+        "question": "How do the warning duration limits and minimum attendance percentages differ between the 2023 rules and the 2026 rules?",
+        "answered_from_context": false,
+        "answer": "I apologize, but I was unable to produce a validated answer grounded in the university documents.",
+        "citations": [],
+        "trace_id": "tr-30b96f8d07b0",
+        "latency_ms": 120347.0
+      },
+      {
+        "id": "q26",
+        "category": "hard",
+        "question": "What is the borrowing duration for undergraduate students according to the Library Lending Regulations?",
+        "answered_from_context": false,
+        "answer": "The provided university documents do not contain sufficient information to answer this question.",
+        "citations": [],
+        "trace_id": "tr-ecf713ddf662",
+        "latency_ms": 18050.7
+      },
+      {
+        "id": "q27",
+        "category": "hard",
+        "question": "Under the 2027 academic regulations in Batch B, what attendance percentage is mandated to be eligible for final exams?",
+        "answered_from_context": false,
+        "answer": "The provided university documents do not contain sufficient information to answer this question.",
+        "citations": [],
+        "trace_id": "tr-6821965f0dfb",
+        "latency_ms": 106.7
+      },
+      {
+        "id": "q28",
+        "category": "hard",
+        "question": "According to the Fee Regulations in Batch B, how many departmental students are granted merit scholarships based on preceding SGPA?",
+        "answered_from_context": true,
+        "answer": "3",
+        "citations": [
+          {
+            "source": "doc01_fee_structure.md",
+            "section": "3. Financial Aid",
+            "page": 1
+          }
+        ],
+        "trace_id": "tr-7c8a2fed45d7",
+        "latency_ms": 34444.7,
+        "faithful_judge": false,
+        "judge_reason": "Unsupported tuition fee for MS programme"
+      }
+    ]
+  },
+  "stochasticity": {
+    "runs": 2,
+    "deltas": {
+      "module_level.paraphrase_pairs": 0.0,
+      "module_level.unrelated_pairs": 0.0,
+      "module_level.paraphrase_mean_sim": 0.0,
+      "module_level.unrelated_mean_sim": 0.0,
+      "module_level.cosine_gap": 0.0,
+      "module_level.paraphrase_min_sim": 0.0,
+      "module_level.unrelated_max_sim": 0.0,
+      "module_level.embedding_ms_per_chunk": -43.0,
+      "module_level.determinism_max_diff": 0.0,
+      "module_level.dimension": 0.0,
+      "component_level.recall_at_3": 0.0,
+      "component_level.recall_at_5": 0.0,
+      "component_level.mrr": 0.0,
+      "component_level.ndcg_at_5": 0.0,
+      "component_level.questions": 0.0,
+      "component_level.noise.recall_at_3": 0.0,
+      "component_level.noise.recall_at_5": 0.0,
+      "component_level.noise.mrr": 0.0,
+      "component_level.noise.ndcg_at_5": 0.0,
+      "component_level.noise.delta.recall_at_3": 0.0,
+      "component_level.noise.delta.recall_at_5": 0.0,
+      "component_level.noise.delta.mrr": 0.0,
+      "component_level.noise.delta.ndcg_at_5": 0.0,
+      "end_to_end_level.faithfulness": 0.0,
+      "end_to_end_level.faithfulness_n": 0.0,
+      "end_to_end_level.human_labelled": 0.0,
+      "end_to_end_level.abstention_correctness": 0.0,
+      "end_to_end_level.unanswerable_n": 0.0,
+      "end_to_end_level.false_abstention_rate": 0.0,
+      "end_to_end_level.citation_validity": 0.0,
+      "end_to_end_level.answer_contains_ground_truth": 0.0,
+      "end_to_end_level.latency_p50_ms": -3925.2,
+      "end_to_end_level.latency_p95_ms": -1184.7,
+      "end_to_end_level.total_questions": 0.0
+    },
+    "max_abs_delta": 3925.2,
+    "note": "Seeds fixed and temperature low; remaining differences come from latency jitter, LLM sampling on the server, and float non-determinism in the embedding runtime."
+  },
+  "gate": {
+    "decision": "FAIL",
+    "violations": [
+      "faithfulness: 0.0 (min 0.85)",
+      "p95 latency: 54111 ms (max 15000 ms)"
+    ],
+    "checks": [
+      "[SKIP] recall@5 drop vs baseline: no baseline given (candidate recall@5 = 0.6364)",
+      "[FAIL] faithfulness: 0.0 (min 0.85)",
+      "[FAIL] p95 latency: 54111 ms (max 15000 ms)",
+      "[PASS] abstention correctness: 1.0 (min 1.0)",
+      "[PASS] citation validity: 1.0 (min 0.95)"
+    ],
+    "baseline_file": null,
+    "thresholds": {
+      "max_recall5_drop": 0.02,
+      "min_faithfulness": 0.85,
+      "max_p95_latency_ms": 15000,
+      "min_abstention_correctness": 1.0,
+      "abstention_not_below_baseline": true,
+      "min_citation_validity": 0.95
+    }
+  }
+}
