@@ -1,7 +1,7 @@
 # RAHBAR · Grounded RAG on Kubernetes
 
-[![CI](https://img.shields.io/badge/CI-Passing-brightgreen?style=flat-square&logo=githubactions)](https://github.com/alisha-i/rahbar-rag-k8s/actions)
-[![CD](https://img.shields.io/badge/CD-Automated-blue?style=flat-square&logo=githubactions)](https://github.com/alisha-i/rahbar-rag-k8s/actions)
+[![CI](https://github.com/alisha-i/rahbar-rag-k8s/actions/workflows/ci.yml/badge.svg)](https://github.com/alisha-i/rahbar-rag-k8s/actions/workflows/ci.yml)
+[![CD](https://github.com/alisha-i/rahbar-rag-k8s/actions/workflows/cd.yml/badge.svg)](https://github.com/alisha-i/rahbar-rag-k8s/actions/workflows/cd.yml)
 [![Kubernetes](https://img.shields.io/badge/Kubernetes-1.28%2B-blue?style=flat-square&logo=kubernetes)](https://kubernetes.io/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=flat-square&logo=fastapi)](https://fastapi.tiangolo.com/)
 [![ChromaDB](https://img.shields.io/badge/ChromaDB-1.0.12-FF6F00?style=flat-square)](https://www.trychroma.com/)
@@ -20,13 +20,45 @@ Built for university academic policies, grading regulations, and handbooks (spec
 ### 🌟 Core Highlights at a Glance
 | Feature | How RAHBAR Implements It |
 | :--- | :--- |
-| **Zero-Hallucination Grounding** | Answers only from retrieved chunks with verified cosine similarity; strictly rejects ungrounded generation. |
+| **Grounding** | Answers only from retrieved chunks above a relevance floor; the prompt delimits evidence as data. |
 | **Deterministic Citations** | Every response cites exact `(source, section, page)`. Citations not present in retrieved context are stripped. |
 | **Honest Abstention** | If a policy does not cover the question or if a topic is absent, returns `answered_from_context: false` instead of guessing. |
-| **Semantic Caching** | Redis-powered vector semantic cache returns sub-millisecond responses for repeated or synonymous queries. |
+| **Semantic Caching** | Redis cache keyed by question embedding (cosine ≥ CACHE_THRESHOLD), namespaced per collection, flushed on every re-index. |
 | **Decoupled Architecture** | **Single-Writer Indexer Job** writes to vector storage; stateless **API Deployments (3 to 8 pods)** are strictly read-only. |
 | **Kubernetes Resilience** | ChromaDB StatefulSet with 1Gi PersistentVolumeClaim, Calico deny-by-default NetworkPolicies, and HPA v2 autoscaling. |
 | **Automated CI/CD** | Linting, unit tests with 60% coverage gate, Kubeconform manifest validation, Trivy container security scanning, Kind e2e regression gate, and SHA-pinned CD deployment. |
+
+---
+
+## 🚀 Assignment 03 (RAGOps): the command for each part (A to F)
+
+Everything below runs **on the minikube cluster** (the demo must be Kubernetes, not Docker).
+The full step-by-step walkthrough, with the screenshot list, is in [`k8s/README.md`](k8s/README.md).
+Prerequisites: Ollama on the laptop (`OLLAMA_HOST=0.0.0.0 ollama serve`, `ollama pull llama3.2:3b`,
+`ollama pull nomic-embed-text`), then:
+
+```bash
+make cluster          # minikube with Calico + ingress + metrics-server
+make images           # builds rahbar-api, rahbar-indexer, rahbar-eval, rahbar-ui and loads them
+kubectl apply -k k8s/overlays/dev      # namespace, PVCs, ConfigMaps, Chroma, Redis, API, UI, indexer Job, CronJob
+```
+
+| Part | Command (Makefile target → what it runs) | Output |
+| --- | --- | --- |
+| **A1/A2** ingest + verify | `make a3-index` (twice: the 2nd run must log `embedded_chunks: 0`) | Job logs + `verification_batch_a_<ts>.json` on the results PVC |
+| **A** Batch B | `make a3-batch-b` → `k8s/indexer-batch-b-job.yaml` | per-document pass/fail for quality, completeness, recency, uniqueness; failures moved to `/corpus/quarantine` |
+| **A2** orphan proof | `kubectl exec -n rahbar job/indexer -- python -m pipeline.run --count-by-doc` (or run a Job with `--count-by-doc`) | chunk count per document id |
+| **A2** rollback | `--rollback academic-rules-2026.md --supersede doc07_academic_rules_2027.md` (see k8s/README §A) | archived version served again |
+| **B** three-level suite | `make a3-eval` → `k8s/eval-job.yaml` (Job) — or `make a3-eval-local` through a port-forward | `eval_baseline_<ts>.json` + `.md` summary table |
+| **C1/C2** change + gate | `kubectl apply -f k8s/candidate-indexer-job.yaml -f k8s/candidate-deployment.yaml -f k8s/eval-job-candidate.yaml` | gate PASS/FAIL, Job exit status; `python eval/gate.py --result ...` re-applies it |
+| **D** traces | every `/api/ask` writes one JSON line to stdout and `/data/traces/<pod>.jsonl`; `python scripts/trace_tool.py <trace_id> --file traces/`; `python scripts/trace_metrics.py --file traces/ --last-minutes 60` | prompt rebuilt from a trace id; metrics over a window |
+| **E** coverage | `make a3-coverage` (`eval/coverage.py`, exits 1 below target) | coverage before/after `golden_extended.jsonl` |
+| **F** cluster ops | `k8s/README.md` §F: rollout status / undo, ConfigMap gate flip, `kubectl top` | screenshots for the appendix |
+| collect results | `make a3-collect` (copies `/data/results` and `/data/traces` from the PVC into the repo) | commit `eval/results/` and `traces/` |
+
+> ⚠️ The numbers in `docs/ASSIGNMENT_03_REPORT.md` must come from these runs. Stub mode
+> (`RETRIEVER=stub`) is for unit tests and `make dev` only; `eval/run_eval_v2.py --offline-stub`
+> refuses to write result files.
 
 ---
 
@@ -209,49 +241,31 @@ minikube addons enable metrics-server
 minikube addons enable ingress
 ```
 
-### 2. Exact Resource Apply Order
-Apply the Kubernetes manifests in strict dependency sequence:
+### 2. Exact apply order (from a clean clone)
 ```bash
-# 1. Dedicated Namespace
-kubectl apply -f k8s/base/namespace.yaml
+# Ollama on the laptop, reachable from minikube
+OLLAMA_HOST=0.0.0.0 ollama serve &          # Windows: set OLLAMA_HOST=0.0.0.0 in the environment, restart Ollama
+ollama pull llama3.2:3b && ollama pull nomic-embed-text
 
-# 2. ConfigMap & Secret Template
-kubectl apply -f k8s/base/configmap.yaml
-kubectl apply -f k8s/base/secret.placeholder.yaml
+# Images (indexer and eval build from the repo root)
+make images                                  # or the four `docker build` lines in the Makefile
 
-# 3. RBAC & ServiceAccounts (Token automounting disabled)
-kubectl apply -f k8s/base/serviceaccounts.yaml
+# Everything in one go: kustomize orders Namespace, PVCs, ConfigMaps, Services, StatefulSet,
+# Deployments, the indexer Job and the CronJob correctly
+kubectl apply -k k8s/overlays/dev
 
-# 4. Data Tier (ChromaDB StatefulSet & Redis Deployment)
-kubectl apply -f k8s/base/services.yaml
-kubectl apply -f k8s/base/chroma-statefulset.yaml
-kubectl apply -f k8s/base/redis-deployment.yaml
+# Optional: only if you use LLM_PROVIDER=hosted
+make secret LLM_API_KEY=...
 
-# 5. Await Stateful Data Tier Rollout
-kubectl rollout status statefulset/chroma -n rahbar --timeout=120s
-kubectl rollout status deployment/redis -n rahbar --timeout=60s
+# Wait: data tier, then the indexer Job (the only Chroma writer), then the API (ready only
+# once the collection exists, is non-empty and was built with the same EMBED_MODEL)
+kubectl rollout status statefulset/chroma -n rahbar --timeout=180s
+kubectl rollout status deployment/redis  -n rahbar --timeout=120s
+kubectl wait --for=condition=complete job/indexer -n rahbar --timeout=600s
+kubectl rollout status deployment/api    -n rahbar --timeout=300s
+kubectl rollout status deployment/ui     -n rahbar --timeout=120s
 
-# 6. Run Initial Single-Writer Indexer Job
-kubectl create job --from=cronjob/reindex initial-index -n rahbar
-kubectl wait --for=condition=complete job/initial-index -n rahbar --timeout=300s
-
-# 7. Serving Tier (API, UI, Ingress, Autoscaler)
-kubectl apply -f k8s/base/api-deployment.yaml
-kubectl apply -f k8s/base/ui-deployment.yaml
-kubectl apply -f k8s/base/ingress.yaml
-kubectl apply -f k8s/base/hpa.yaml
-
-# 8. Network Security (Calico Deny-by-Default NetworkPolicy)
-kubectl apply -f k8s/base/networkpolicy.yaml
-
-# 9. Verify Serving Rollout
-kubectl rollout status deployment/api -n rahbar --timeout=120s
-kubectl rollout status deployment/ui -n rahbar --timeout=60s
-```
-
-*Alternatively, apply the full Kustomize overlay directly:*
-```bash
-kubectl apply -k k8s/overlays/dev/
+make ask Q="What CGPA puts a student on academic warning?"
 ```
 
 ### 3. Verification & Evaluation Gate
@@ -259,11 +273,9 @@ Run the automated mechanical checker to verify compliance:
 ```bash
 python scripts/check_submission.py
 ```
-*Output: **164 passed, 0 failures**.*
-
-Score retrieval quality against the golden set:
+Score retrieval quality against the A2 golden set (through the Ingress, `make eval`):
 ```bash
-python eval/run_eval.py --api http://127.0.0.1:8000 --golden eval/fixtures/golden.fixture.yaml --baseline eval/baseline.json
+python eval/run_eval.py --api http://$(minikube ip) --host rahbar.local --golden eval/golden.yaml --baseline eval/baseline.json
 ```
 
 ---
