@@ -191,7 +191,8 @@ def run_component_level_test(golden: list[dict[str, Any]], retrieve: AskFn, nois
 # =============================================================================
 
 JUDGE_PROMPT = """You are grading a retrieval-augmented answer.
-CONTEXT (the passages the system retrieved):
+QUESTION: {question}
+CONTEXT (the passages the system cited):
 <<<
 {context}
 >>>
@@ -199,8 +200,10 @@ ANSWER:
 <<<
 {answer}
 >>>
-Is every factual claim in ANSWER supported by CONTEXT? Unsupported numbers, dates or rules count as
-unsupported. Reply with JSON only: {{"faithful": true|false, "reason": "<one short sentence>"}}"""
+Read ANSWER as the answer to QUESTION. Is every fact it states (numbers, dates, rules) written in
+CONTEXT? Ignore facts in CONTEXT that the answer does not use. A short answer such as "80 percent"
+is faithful if CONTEXT states it for this question.
+Reply with JSON only: {{"faithful": true|false, "reason": "<one short sentence>"}}"""
 
 
 def _lexical_support(answer: str, context: str) -> float:
@@ -250,7 +253,7 @@ class Judge:
         self.kind = f"llm:{model}"
         self._down = False
 
-    def __call__(self, answer: str, context: str) -> tuple[float, str]:
+    def __call__(self, answer: str, context: str, question: str = "") -> tuple[float, str]:
         if not self._down:
             try:
                 import httpx
@@ -258,7 +261,7 @@ class Judge:
                 r = httpx.post(self.url, timeout=120.0, json={
                     "model": self.model, "stream": False, "format": "json",
                     "options": {"temperature": 0, "seed": self.seed},
-                    "messages": [{"role": "user", "content": JUDGE_PROMPT.format(context=context[:6000], answer=answer)}],
+                    "messages": [{"role": "user", "content": JUDGE_PROMPT.format(question=question, context=context[:4000], answer=answer)}],
                 })
                 r.raise_for_status()
                 content = r.json()["message"]["content"]
@@ -318,8 +321,12 @@ def run_end_to_end_test(golden: list[dict[str, Any]], ask: AskFn, judge: Judge,
         else:
             false_abst.append(0.0 if answered else 1.0)
             if answered:
-                context = "\n".join(str(r.get("text") or "") for r in retrieved)
-                f, reason = judge(row["answer"], context)
+                # Judge against the passages the answer CITES (top 3 retrieved if it cites none):
+                # a 3B judge gets lost in five unrelated chunks.
+                cited = {(str(c.get("source")), str(c.get("section"))) for c in cites}
+                used = [r for r in retrieved if (str(r.get("source")), str(r.get("section"))) in cited] or retrieved[:3]
+                context = "\n---\n".join(str(r.get("text") or "") for r in used)
+                f, reason = judge(row["answer"], context, q["question"])
                 faith.append(f)
                 row.update(faithful_judge=bool(f), judge_reason=reason)
                 if q["id"] in human:
