@@ -331,18 +331,30 @@ def run_end_to_end_test(golden: list[dict[str, Any]], ask: AskFn, judge: Judge,
 def http_clients(api: str) -> tuple[AskFn, AskFn]:
     import httpx
 
-    client = httpx.Client(timeout=180.0, headers={"Cache-Control": "no-cache"})
+    # No keep-alive: uvicorn closes idle connections after 5 s, and the LLM judge runs between
+    # questions, so a pooled connection is often already closed ("Server disconnected").
+    client = httpx.Client(timeout=300.0, headers={"Cache-Control": "no-cache"},
+                          limits=httpx.Limits(max_keepalive_connections=0))
     base = api.rstrip("/")
 
+    def _post(path: str, q: str) -> dict[str, Any]:
+        last: Exception | None = None
+        for attempt in range(3):
+            try:
+                r = client.post(f"{base}{path}", json={"question": q})
+                r.raise_for_status()
+                return dict(r.json())
+            except (httpx.TransportError, httpx.HTTPStatusError) as exc:
+                last = exc
+                print(f"[warn] {path} attempt {attempt + 1} failed: {exc!r}; retrying", file=sys.stderr)
+                time.sleep(3 * (attempt + 1))
+        raise RuntimeError(f"{path} failed 3 times for {q!r}") from last
+
     def ask(q: str) -> dict[str, Any]:
-        r = client.post(f"{base}/api/ask", json={"question": q})
-        r.raise_for_status()
-        return dict(r.json())
+        return _post("/api/ask", q)
 
     def retrieve(q: str) -> dict[str, Any]:
-        r = client.post(f"{base}/api/retrieve", json={"question": q})
-        r.raise_for_status()
-        return dict(r.json())
+        return _post("/api/retrieve", q)
 
     return ask, retrieve
 
